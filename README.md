@@ -4,7 +4,7 @@ This is a light react audio player that is wrapped around a HTML5 audio tag, cre
 
 The library was designed to add a audio player to a body of a story which will not trigger the static audio player.
 
-![alt text](/public/audioPlayerImg.jpg)
+![audio player img](/public/audioPlayerImg.jpg)
 
 ## Table of Contents
 
