@@ -1,6 +1,3 @@
-import React from 'react'
-import styles from './styles.module.css'
+import ReactAudioPlayer from '../src/components/ReactAudioPlayer/ReactAudioPlayer'
 
-export const ExampleComponent = ({ text }) => {
-  return <div className={styles.test}>Example Component: {text}</div>
-}
+export { ReactAudioPlayer }

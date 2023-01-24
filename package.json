@@ -1,10 +1,13 @@
 {
   "name": "apm-react-audio-player",
   "version": "1.0.0",
-  "description": "Made with create-react-library",
-  "author": "Phanx091",
+  "author": "Jason Phan <jphan@mpr.org>",
   "license": "MIT",
-  "repository": "APMG/apm-react-audio-player.git",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "APMG/apm-react-audio-player.git"
+  },
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
   "source": "src/index.js",
@@ -12,23 +15,33 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "microbundle-crl --no-compress --format modern,cjs",
-    "start": "microbundle-crl watch --no-compress --format modern,cjs",
-    "prepare": "run-s build",
-    "test": "run-s test:unit test:lint test:build",
-    "test:build": "run-s build",
-    "test:lint": "eslint .",
-    "test:unit": "cross-env CI=1 react-scripts test --env=jsdom",
-    "test:watch": "react-scripts test --env=jsdom",
-    "predeploy": "cd example && yarn install && yarn run build",
-    "deploy": "gh-pages -d example/build"
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "jest --watch",
+    "test:ci": "jest",
+    "test:coverage": "jest --coverage",
+    "eslint": "eslint .",
+    "prettier": "prettier --check '**/**.js'",
+    "prettier:fix": "prettier --check '**/**.js' --write",
+    "clean": "rm -rf node_modules dist package-lock.json yarn.lock"
   },
   "peerDependencies": {
     "react": "^16.0.0"
   },
+  "dependencies": {
+    "react-icons": "^4.7.1",
+    "rollup": "^1.17.0",
+    "rollup-plugin-babel": "^4.3.3"
+  },
   "devDependencies": {
-    "microbundle-crl": "^0.13.10",
     "babel-eslint": "^10.0.3",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-proposal-optional-chaining": "^7.2.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "babel-polyfill": "^6.26.0",
+    "@testing-library/react": "^8.0.5",
     "cross-env": "^7.0.2",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.7.0",
@@ -40,12 +53,14 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
-    "gh-pages": "^2.2.0",
-    "npm-run-all": "^4.1.5",
     "prettier": "^2.0.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "^3.4.1"
+    "react-scripts": "^3.4.1",
+    "rollup-plugin-json": "^4.0.0",
+    "jest": "^24.8.0",
+    "jest-environment-jsdom-fourteen": "^0.1.0",
+    "jest-prop-type-error": "^1.1.0"
   },
   "files": [
     "dist"
