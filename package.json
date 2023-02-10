@@ -29,7 +29,6 @@
     "react": "^16.0.0"
   },
   "dependencies": {
-    "react-icons": "^4.7.1",
     "rollup": "^1.17.0",
     "rollup-plugin-babel": "^4.3.3"
   },

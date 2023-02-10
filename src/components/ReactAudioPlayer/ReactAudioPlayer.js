@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 // import styles from '../../ReactAudioPlayer.module.css'
-import { BsArrowLeftShort, BsArrowRightShort } from 'react-icons/bs'
-import { FaPlay, FaPause } from 'react-icons/fa'
+import Play from './icons/Play'
+import Pause from './icons/Pause'
 import { useAudioPlayer } from '../../hooks/ReactAudioPlayer'
 
 const ReactAudioPlayer = (props) => {
@@ -10,7 +10,7 @@ const ReactAudioPlayer = (props) => {
   const progressBar = useRef() // reference our progress bar
 
   const customStyles = props ? props.style : ''
-  const { title, description, audioSrc, forwardBackward } = props
+  const { title, description, audioSrc } = props
 
   // hooks
   const {
@@ -18,8 +18,6 @@ const ReactAudioPlayer = (props) => {
     calculateTime,
     togglePlaying,
     changePlayerCurrentTime,
-    backThirty,
-    forwardThirty,
     isPlaying,
     currentTime,
     duration
@@ -38,30 +36,15 @@ const ReactAudioPlayer = (props) => {
           onLoadedMetadata={onLoadedMetadata}
         />
 
-        {/* back 30 seconds */}
-        {forwardBackward && (
-          <button className='forwardBackward' onClick={backThirty}>
-            30
-            <BsArrowLeftShort />
-          </button>
-        )}
         <div className='playPauseContainer'>
           <button
             onClick={togglePlaying}
             className='playPause'
             style={customStyles && customStyles.playPause}
           >
-            {isPlaying ? <FaPause /> : <FaPlay className='play' />}
+            {isPlaying ? <Pause /> : <Play className='play' />}
           </button>
         </div>
-
-        {/* skip to 30 seconds */}
-        {forwardBackward && (
-          <button className='forwardBackward' onClick={forwardThirty}>
-            <BsArrowRightShort />
-            30
-          </button>
-        )}
 
         {/* current time */}
         <div className='currentTime'>{calculateTime(currentTime)}</div>
@@ -84,12 +67,8 @@ const ReactAudioPlayer = (props) => {
 
         {/* title and description */}
         <div className='textBox'>
-          <div className='textBoxTitle'>
-            {title || 'Audio Player missing title'}
-          </div>
-          <div className='textBoxDescription'>
-            {description || 'Audio Player missing description'}
-          </div>
+          <div className='textBoxTitle'> {title || ''} </div>
+          <div className='textBoxDescription'> {description || ''} </div>
         </div>
       </div>
     )
