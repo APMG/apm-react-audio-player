@@ -1,6 +1,6 @@
 {
   "name": "apm-react-audio-player",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Jason Phan <jphan@mpr.org>",
   "license": "MIT",
   "private": false,
@@ -29,7 +29,6 @@
     "react": "^16.0.0"
   },
   "dependencies": {
-    "react-icons": "^4.7.1",
     "rollup": "^1.17.0",
     "rollup-plugin-babel": "^4.3.3"
   },
