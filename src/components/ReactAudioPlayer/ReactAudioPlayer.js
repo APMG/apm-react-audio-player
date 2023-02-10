@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 // import styles from '../../ReactAudioPlayer.module.css'
-import Play from './icons/Play'
-import Pause from './icons/Pause'
+import Play from '../icons/Play/Play'
+import Pause from '../icons/Pause/Pause'
 import { useAudioPlayer } from '../../hooks/ReactAudioPlayer'
 
 const ReactAudioPlayer = (props) => {
