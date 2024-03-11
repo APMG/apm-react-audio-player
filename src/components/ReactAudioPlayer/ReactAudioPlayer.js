@@ -2,12 +2,12 @@ import React, { useRef } from 'react'
 // import styles from '../../ReactAudioPlayer.module.css'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
-import { useAudioPlayer } from '../../hooks/ReactAudioPlayer'
+import { useAudioPlayer } from '../../hooks/useReactAudioPlayer'
 
 const ReactAudioPlayer = (props) => {
   // references
-  const audioPlayer = useRef() // reference our audio component
-  const progressBar = useRef() // reference our progress bar
+  const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
+  const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
 
   const customStyles = props ? props.style : ''
   const { title, description, audioSrc } = props
@@ -21,7 +21,7 @@ const ReactAudioPlayer = (props) => {
     isPlaying,
     currentTime,
     duration
-  } = useAudioPlayer(audioPlayer, progressBar)
+  } = useAudioPlayer(audioPlayerRef, progressBarRef)
 
   return (
     audioSrc && (
@@ -30,7 +30,7 @@ const ReactAudioPlayer = (props) => {
         style={customStyles && customStyles.audioPlayer}
       >
         <audio
-          ref={audioPlayer}
+          ref={audioPlayerRef}
           src={audioSrc}
           preload='metadata'
           onLoadedMetadata={onLoadedMetadata}
@@ -55,7 +55,7 @@ const ReactAudioPlayer = (props) => {
             type='range'
             className='progressBar'
             defaultValue='0'
-            ref={progressBar}
+            ref={progressBarRef}
             onChange={changePlayerCurrentTime}
           />
         </div>
