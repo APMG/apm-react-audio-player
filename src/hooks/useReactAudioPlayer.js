@@ -4,6 +4,7 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
+  const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
 
   const onLoadedMetadata = () => {
@@ -27,12 +28,14 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
     // when you reach the end of the song
     if (progressBarRef.current.value === duration) {
       restart()
+      setIsFinishedPlaying(true)
       return
     }
     animationRef.current = window.requestAnimationFrame(whilePlaying)
   }
 
   const pause = () => {
+    setIsPlaying(false)
     audioRef.current.pause()
     window.cancelAnimationFrame(animationRef.current)
   }
@@ -44,6 +47,7 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
   }
 
   const play = () => {
+    setIsPlaying(true)
     audioRef.current.play()
     animationRef.current = window.requestAnimationFrame(whilePlaying)
   }
@@ -57,9 +61,7 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
   }
 
   const togglePlaying = () => {
-    const prevState = isPlaying
-    setIsPlaying(!prevState)
-    if (!prevState) {
+    if (!isPlaying) {
       play()
     } else {
       pause()
@@ -98,6 +100,7 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
     backThirty,
     forwardThirty,
     isPlaying,
+    isFinished: isFinishedPlaying,
     currentTime,
     duration
   }
