@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export const useAudioPlayer = (audioRef, progressBarRef) => {
+export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
@@ -9,7 +9,10 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
   const onLoadedMetadata = () => {
     const seconds = Math.floor(audioRef.current.duration)
     setDuration(seconds)
-    progressBarRef.current.max = seconds
+
+    if (!audioRef.current.currentSrc.includes('stream')) {
+      progressBarRef.current.max = seconds
+    }
   }
 
   const updateCurrentTime = () => {
@@ -90,6 +93,12 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
     timeTravel(Number(progressBarRef.current.value) + 30)
   }
 
+  const volumeControl = (e) => {
+    const { value } = e.target
+    const volume = value / 100
+    audioRef.current.volume = volume
+  }
+
   return {
     onLoadedMetadata,
     calculateTime,
@@ -99,6 +108,8 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
     forwardThirty,
     isPlaying,
     currentTime,
-    duration
+    duration,
+    volumeCtrl,
+    volumeControl
   }
 }
