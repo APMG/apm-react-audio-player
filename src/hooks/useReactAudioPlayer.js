@@ -99,6 +99,8 @@ export const useAudioPlayer = (audioRef, progressBarRef) => {
     changePlayerCurrentTime,
     backThirty,
     forwardThirty,
+    play,
+    pause,
     isPlaying,
     isFinished: isFinishedPlaying,
     currentTime,

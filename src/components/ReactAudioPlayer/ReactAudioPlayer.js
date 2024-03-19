@@ -38,7 +38,7 @@ const ReactAudioPlayer = (props) => {
 
         <div className='playPauseContainer'>
           <button
-            onClick={togglePlaying}
+            onClick={() => togglePlaying()}
             className='playPause'
             style={customStyles && customStyles.playPause}
           >
