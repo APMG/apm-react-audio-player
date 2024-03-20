@@ -3,7 +3,6 @@ import React, { useRef } from 'react'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
 import { useAudioPlayer } from '../../hooks/useReactAudioPlayer'
-import Image from 'next/image'
 
 const ReactAudioPlayer = (props) => {
   // references
@@ -18,7 +17,6 @@ const ReactAudioPlayer = (props) => {
     volumeCtrl,
     playBtnClass,
     customHtml,
-    customProps,
     isLive
   } = props
 
@@ -82,19 +80,6 @@ const ReactAudioPlayer = (props) => {
             </div>
           </div>
           {customHtml && customHtml}
-          {customProps.audioThumbnailSrc && (
-            <div className='player-thumb-and-text'>
-              <div className='player-thumbnail'>
-                <Image
-                  className='player-thumbnail'
-                  src={customProps.audioThumbnailSrc}
-                  alt={customProps.audioThumbnailAlt}
-                  width={500}
-                  height={500}
-                />
-              </div>
-            </div>
-          )}
           {!isLive && (
             <>
               <div className='player-currentTime'>
