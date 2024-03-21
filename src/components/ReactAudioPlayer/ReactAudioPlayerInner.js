@@ -16,7 +16,6 @@ const ReactAudioPlayerInner = (props) => {
     volumeCtrl,
     playBtnClass,
     customHtml,
-    customProps,
     isLive,
     onLoadedMetadata,
     calculateTime,
@@ -76,17 +75,6 @@ const ReactAudioPlayerInner = (props) => {
             </div>
           </div>
           {customHtml && customHtml}
-          {customProps.audioThumbnailSrc && (
-            <div className='player-thumb-and-text'>
-              <div className='player-thumbnail'>
-                <img
-                  className='player-thumbnail'
-                  src={customProps.audioThumbnailSrc}
-                  alt={customProps.audioThumbnailAlt}
-                />
-              </div>
-            </div>
-          )}
           {!isLive && (
             <>
               <div className='player-currentTime'>
