@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -6,6 +6,13 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const [currentTime, setCurrentTime] = useState(0)
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
+
+  useEffect(() => {
+    if (currentTime === Number(duration)) {
+      restart()
+      setIsFinishedPlaying(true)
+    }
+  }, [currentTime])
 
   const onLoadedMetadata = () => {
     const seconds = Math.floor(audioRef.current.duration)
@@ -51,6 +58,7 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
 
   const play = () => {
     setIsPlaying(true)
+    setIsFinishedPlaying(false)
     audioRef.current.play()
     animationRef.current = window.requestAnimationFrame(whilePlaying)
   }
@@ -108,8 +116,10 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     changePlayerCurrentTime,
     backThirty,
     forwardThirty,
+    play,
+    pause,
     isPlaying,
-    isFinished: isFinishedPlaying,
+    isFinishedPlaying,
     currentTime,
     duration,
     volumeCtrl,
