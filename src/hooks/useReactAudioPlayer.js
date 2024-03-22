@@ -6,6 +6,7 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const [currentTime, setCurrentTime] = useState(0)
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
+  const [isMuted, setIsMuted] = useState(false)
 
   const onLoadedMetadata = () => {
     const seconds = Math.floor(audioRef.current.duration)
@@ -53,6 +54,10 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     setIsPlaying(true)
     audioRef.current.play()
     animationRef.current = window.requestAnimationFrame(whilePlaying)
+  }
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
   }
 
   const calculateTime = (secs) => {
@@ -113,6 +118,8 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     currentTime,
     duration,
     volumeCtrl,
-    volumeControl
+    volumeControl,
+    toggleMute,
+    isMuted
   }
 }
