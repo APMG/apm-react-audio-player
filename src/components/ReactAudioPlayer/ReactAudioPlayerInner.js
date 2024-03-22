@@ -24,7 +24,9 @@ const ReactAudioPlayerInner = (props) => {
     isPlaying,
     currentTime,
     duration,
-    volumeControl
+    volumeControl,
+    toggleMute,
+    isMuted
   } = props
 
   return (
@@ -38,14 +40,33 @@ const ReactAudioPlayerInner = (props) => {
           src={audioSrc}
           preload='metadata'
           onLoadedMetadata={onLoadedMetadata}
+          muted={isMuted}
         />
         <div className='player-layout'>
           {volumeCtrl && (
             <div className='player-controls-secondary-outer'>
               <div>
                 <span className='player-volume-text'>
-                  <img src='/img/icon-volume-low.svg' alt='' />
-                  Volume
+                  <div className='player-volume-icon'>
+                    <button
+                      onClick={toggleMute}
+                      aria-label={isMuted === true ? 'Muted' : 'Not Muted'}
+                      title={isMuted === true ? 'Muted' : 'Not Muted'}
+                    >
+                      {!isMuted ? (
+                        <img
+                          src='/img/icon-volume-low.svg'
+                          alt='Volume Button'
+                        />
+                      ) : (
+                        <img
+                          src='/img/icon-volume-mute.svg'
+                          alt='Volume Mute Button'
+                        />
+                      )}
+                    </button>
+                  </div>
+                  <span>Volume</span>
                 </span>
                 <div className='player-controls player-controls-secondary'>
                   <div className='player-volume'>
