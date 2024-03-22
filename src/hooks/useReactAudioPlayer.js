@@ -7,10 +7,12 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
   const [isMuted, setIsMuted] = useState(false)
+  const isStream =
+    audioRef.current && audioRef.current.currentSrc.includes('stream')
 
   useEffect(() => {
     if (currentTime === Number(duration)) {
-      restart()
+      // restart()
       setIsFinishedPlaying(true)
     }
   }, [currentTime])
@@ -19,7 +21,7 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     const seconds = Math.floor(audioRef.current.duration)
     setDuration(seconds)
 
-    if (!audioRef.current.currentSrc.includes('stream')) {
+    if (!isStream) {
       progressBarRef.current.max = seconds
     }
   }
@@ -29,7 +31,10 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   }
 
   const whilePlaying = () => {
-    progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
+    if (!isStream) {
+      progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
+    }
+
     progressBarRef.current.style.setProperty(
       '--seek-before-width',
       `${(progressBarRef.current.value / duration) * 100}%`
@@ -37,8 +42,8 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     updateCurrentTime()
 
     // when you reach the end of the song
-    if (progressBarRef.current.value === duration) {
-      restart()
+    if (!isStream && progressBarRef.current.value === duration) {
+      // restart()
       setIsFinishedPlaying(true)
       return
     }
@@ -51,17 +56,19 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     window.cancelAnimationFrame(animationRef.current)
   }
 
-  const restart = () => {
-    progressBarRef.current.value = 0
-    updateCurrentTime()
-    pause()
-  }
+  // const restart = () => {
+  //   progressBarRef.current.value = 0
+  //   updateCurrentTime()
+  //   pause()
+  // }
 
   const play = () => {
     setIsPlaying(true)
     setIsFinishedPlaying(false)
     audioRef.current.play()
-    animationRef.current = window.requestAnimationFrame(whilePlaying)
+    if (!isStream) {
+      animationRef.current = window.requestAnimationFrame(whilePlaying)
+    }
   }
 
   const toggleMute = () => {
