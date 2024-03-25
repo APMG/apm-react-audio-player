@@ -66,7 +66,7 @@ const ReactAudioPlayerInner = (props) => {
                       )}
                     </button>
                   </div>
-                  <span>Volume</span>
+                  <label>Volume</label>
                 </span>
                 <div className='player-controls player-controls-secondary'>
                   <div className='player-volume'>
@@ -77,6 +77,7 @@ const ReactAudioPlayerInner = (props) => {
                       min={0}
                       max={100}
                       aria-hidden='true'
+                      aria-valuetext='100%'
                       onChange={(e) => volumeControl(e)}
                     />
                   </div>
