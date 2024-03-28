@@ -1,5 +1,4 @@
 import React, { useRef } from 'react'
-// import styles from '../../ReactAudioPlayer.module.css'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
 
@@ -11,7 +10,6 @@ const ReactAudioPlayerInner = (props) => {
   const customStyles = props ? props.style : ''
   const {
     title,
-    description,
     audioSrc,
     volumeCtrl,
     playBtnClass,
@@ -26,8 +24,17 @@ const ReactAudioPlayerInner = (props) => {
     duration,
     volumeControl,
     toggleMute,
-    isMuted
+    isMuted,
+    formatCalculateTime
   } = props
+
+  const audioDuration = duration && !isNaN(duration) && calculateTime(duration)
+
+  const formatDuration =
+    duration &&
+    !isNaN(duration) &&
+    audioDuration &&
+    formatCalculateTime(audioDuration)
 
   return (
     audioSrc && (
@@ -45,48 +52,48 @@ const ReactAudioPlayerInner = (props) => {
         <div className='player-layout'>
           {volumeCtrl && (
             <div className='player-controls-secondary-outer'>
-              <div>
-                <span className='player-volume-text'>
-                  <div className='player-volume-icon'>
-                    <button
-                      onClick={toggleMute}
-                      aria-label={isMuted === true ? 'Muted' : 'Not Muted'}
-                      title={isMuted === true ? 'Muted' : 'Not Muted'}
-                    >
-                      {!isMuted ? (
-                        <img
-                          src='/img/icon-volume-low.svg'
-                          alt='Volume Button'
-                        />
-                      ) : (
-                        <img
-                          src='/img/icon-volume-mute.svg'
-                          alt='Volume Mute Button'
-                        />
-                      )}
-                    </button>
-                  </div>
-                  <label>Volume</label>
-                </span>
-                <div className='player-controls player-controls-secondary'>
-                  <div className='player-volume'>
-                    <input
-                      id='player-volume'
-                      type='range'
-                      className='player-timeline-progress js-player-volume-current'
-                      min={0}
-                      max={100}
-                      aria-hidden='true'
-                      aria-valuetext='100%'
-                      onChange={(e) => volumeControl(e)}
-                    />
-                  </div>
+              <div className='player-volume-control'>
+                <div className='player-volume-icon'>
+                  <button
+                    onClick={toggleMute}
+                    aria-label={isMuted === true ? 'Muted' : 'Not Muted'}
+                    title={isMuted === true ? 'Muted' : 'Not Muted'}
+                  >
+                    {!isMuted ? (
+                      <img src='/img/icon-volume-low.svg' alt='Volume Button' />
+                    ) : (
+                      <img
+                        src='/img/icon-volume-mute.svg'
+                        alt='Volume Mute Button'
+                      />
+                    )}
+                  </button>
+                </div>
+                <div className='player-timeline player-controls-secondary'>
+                  <input
+                    id='player-volume'
+                    type='range'
+                    className='player-volume-progress'
+                    min={0}
+                    max={100}
+                    aria-hidden='true'
+                    aria-valuetext='100%'
+                    onChange={(e) => volumeControl(e)}
+                  />
+                </div>
+                <div>
+                  <img src='/img/icon-volume-high.svg' alt='Volume Button' />
                 </div>
               </div>
+              <div className='player-volume-label'>Volume</div>
             </div>
           )}
           <div className='player-controls'>
-            <div className='player-btn-play-pause-outer'>
+            <div
+              className={`${
+                isPlaying ? 'is-playing' : ''
+              } player-btn-play-pause-outer`}
+            >
               <button
                 onClick={togglePlaying}
                 className={playBtnClass}
@@ -96,12 +103,8 @@ const ReactAudioPlayerInner = (props) => {
               </button>
             </div>
           </div>
-          {customHtml && customHtml}
           {!isLive && (
             <>
-              <div className='player-currentTime'>
-                {calculateTime(currentTime)}
-              </div>
               <div className='player-timeline'>
                 <input
                   type='range'
@@ -111,23 +114,32 @@ const ReactAudioPlayerInner = (props) => {
                   ref={progressBarRef}
                   onChange={changePlayerCurrentTime}
                 />
-              </div>
-              <div
-                className='player-duration'
-                style={customStyles && customStyles.duration}
-              >
-                {duration && !isNaN(duration) && calculateTime(duration)}
+                <div className='player-times'>
+                  <div className='player-currentTime'>
+                    {calculateTime(currentTime)}
+                  </div>
+                  <div
+                    className='player-duration'
+                    style={customStyles && customStyles.duration}
+                  >
+                    {duration && !isNaN(duration) && calculateTime(duration)}
+                  </div>
+                </div>
               </div>
             </>
           )}
           <div className='player-content'>
+            {customHtml && customHtml}
             <div className='player-audio-type type-sm'>
               {isLive ? (
                 <div className='player-live-label'>On Air</div>
               ) : (
-                <div className='player-title'> {title || ''} </div>
+                <div className='player-label'>
+                  listen
+                  <div className='player-label-duration'>{`[${formatDuration}]`}</div>
+                </div>
               )}
-              <div className='player-description'>{description || ''} </div>
+              <div className='player-title'>{title || ''} </div>
             </div>
           </div>
         </div>

@@ -121,6 +121,19 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     audioRef.current.volume = volume
   }
 
+  const formatCalculateTime = (timeString) => {
+    const toString = String(timeString)
+    if (toString.split(':').length === 3) {
+      const [hours, minutes, seconds] = toString.split(':')
+      return `${parseInt(hours)}hr ${parseInt(minutes)}min ${parseInt(
+        seconds
+      )}sec`
+    } else if (toString.split(':').length === 2) {
+      const [minutes, seconds] = toString.split(':')
+      return `${parseInt(minutes)}min ${parseInt(seconds)}sec`
+    }
+  }
+
   return {
     onLoadedMetadata,
     calculateTime,
@@ -137,6 +150,7 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     volumeCtrl,
     volumeControl,
     toggleMute,
-    isMuted
+    isMuted,
+    formatCalculateTime
   }
 }

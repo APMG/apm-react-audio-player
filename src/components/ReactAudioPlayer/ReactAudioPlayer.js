@@ -20,7 +20,8 @@ const ReactAudioPlayer = (props) => {
     duration,
     volumeControl,
     toggleMute,
-    isMuted
+    isMuted,
+    formatCalculateTime
   } = useAudioPlayer(audioPlayerRef, progressBarRef)
 
   return (
@@ -39,6 +40,7 @@ const ReactAudioPlayer = (props) => {
       volumeControl={volumeControl}
       toggleMute={toggleMute}
       isMuted={isMuted}
+      formatCalculateTime={formatCalculateTime}
     />
   )
 }
