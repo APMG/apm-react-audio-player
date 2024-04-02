@@ -25,7 +25,9 @@ const ReactAudioPlayerInner = (props) => {
     volumeControl,
     toggleMute,
     isMuted,
-    formatCalculateTime
+    formatCalculateTime,
+    rewindControl,
+    forwardControl
   } = props
 
   const audioDuration = duration && !isNaN(duration) && calculateTime(duration)
@@ -89,6 +91,16 @@ const ReactAudioPlayerInner = (props) => {
             </div>
           )}
           <div className='player-controls'>
+            {!isLive && (
+              <div className='player-backward-forward-controls'>
+                <button onClick={rewindControl}>
+                  <img
+                    src='/img/icon-rewind-15.svg'
+                    alt='Backward 15 seconds'
+                  />
+                </button>
+              </div>
+            )}
             <div
               className={`${
                 isPlaying ? 'is-playing' : ''
@@ -102,6 +114,16 @@ const ReactAudioPlayerInner = (props) => {
                 {isPlaying ? <Pause /> : <Play />}
               </button>
             </div>
+            {!isLive && (
+              <div className='player-backward-forward-controls'>
+                <button onClick={forwardControl}>
+                  <img
+                    src='/img/icon-forward-15.svg'
+                    alt='Forward 15 seconds'
+                  />
+                </button>
+              </div>
+            )}
           </div>
           {!isLive && (
             <>

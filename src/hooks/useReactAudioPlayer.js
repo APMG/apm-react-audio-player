@@ -101,18 +101,20 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     )
   }
 
-  const timeTravel = (newTime) => {
-    progressBarRef.current.value = newTime
+  const changeRange = () => {
+    audioRef.current.currentTime = progressBarRef.current.value
     updateCurrentTime()
     changePlayerCurrentTime()
   }
 
-  const backThirty = () => {
-    timeTravel(Number(progressBarRef.current.value) - 30)
+  const rewindControl = () => {
+    progressBarRef.current.value = Number(progressBarRef.current.value) - 15
+    changeRange()
   }
 
-  const forwardThirty = () => {
-    timeTravel(Number(progressBarRef.current.value) + 30)
+  const forwardControl = () => {
+    progressBarRef.current.value = Number(progressBarRef.current.value) + 15
+    changeRange()
   }
 
   const volumeControl = (e) => {
@@ -139,8 +141,8 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     calculateTime,
     togglePlaying,
     changePlayerCurrentTime,
-    backThirty,
-    forwardThirty,
+    rewindControl,
+    forwardControl,
     play,
     pause,
     isPlaying,
@@ -148,9 +150,9 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     currentTime,
     duration,
     volumeCtrl,
+    isMuted,
     volumeControl,
     toggleMute,
-    isMuted,
     formatCalculateTime
   }
 }
