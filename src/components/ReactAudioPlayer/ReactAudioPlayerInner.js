@@ -128,14 +128,16 @@ const ReactAudioPlayerInner = (props) => {
           {!isLive && (
             <>
               <div className='player-timeline'>
-                <input
-                  type='range'
-                  className='player-timeline-progress'
-                  defaultValue='0'
-                  aria-hidden='true'
-                  ref={progressBarRef}
-                  onChange={changePlayerCurrentTime}
-                />
+                <div className='player-timeline-progress-outer'>
+                  <input
+                    type='range'
+                    className='player-timeline-progress'
+                    defaultValue='0'
+                    ref={progressBarRef}
+                    onChange={changePlayerCurrentTime}
+                    aria-label="Audio progress"
+                  />
+                </div>
                 <div className='player-times'>
                   <div className='player-currentTime'>
                     {calculateTime(currentTime)}
