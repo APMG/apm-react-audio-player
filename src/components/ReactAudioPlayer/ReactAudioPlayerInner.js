@@ -136,6 +136,7 @@ const ReactAudioPlayerInner = (props) => {
                     ref={progressBarRef}
                     onChange={changePlayerCurrentTime}
                     aria-label="Audio progress"
+                    max={duration}
                   />
                 </div>
                 <div className='player-times'>
