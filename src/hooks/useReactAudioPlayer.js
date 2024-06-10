@@ -7,8 +7,7 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
   const [isMuted, setIsMuted] = useState(false)
-  const isStream =
-    audioRef.current && audioRef.current.currentSrc.includes('stream')
+  const [isStream, setIsStream] = useState(false)
 
   useEffect(() => {
     if (currentTime === Number(duration)) {
@@ -20,6 +19,7 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   const onLoadedMetadata = () => {
     const seconds = Math.floor(audioRef.current.duration)
     setDuration(seconds)
+    setIsStream(audioRef.current && audioRef.current.currentSrc.includes('stream'))
 
     if (!isStream) {
       progressBarRef.current.max = seconds
