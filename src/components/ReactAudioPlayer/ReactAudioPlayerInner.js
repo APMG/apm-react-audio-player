@@ -47,7 +47,7 @@ const ReactAudioPlayerInner = (props) => {
         <audio
           ref={audioPlayerRef}
           src={audioSrc}
-          preload='metadata'
+          preload='none'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
         />
@@ -135,7 +135,7 @@ const ReactAudioPlayerInner = (props) => {
                     defaultValue='0'
                     ref={progressBarRef}
                     onChange={changePlayerCurrentTime}
-                    aria-label="Audio progress"
+                    aria-label='Audio progress'
                     max={duration}
                   />
                 </div>
