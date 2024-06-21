@@ -47,7 +47,7 @@ const ReactAudioPlayerInner = (props) => {
         <audio
           ref={audioPlayerRef}
           src={audioSrc}
-          preload='none'
+          preload='metadata'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
         />

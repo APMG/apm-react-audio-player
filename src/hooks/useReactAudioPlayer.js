@@ -31,7 +31,8 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
   }
 
   const whilePlaying = () => {
-    if (!isStream) {
+    if (!audioRef.current.currentSrc.includes('stream')) {
+      // isStream isn't correct here
       progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
     }
 
@@ -66,7 +67,8 @@ export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
     setIsPlaying(true)
     setIsFinishedPlaying(false)
     audioRef.current.play()
-    if (!isStream) {
+    if (!audioRef.current.currentSrc.includes('stream')) {
+      // isStream isn't correctly set here
       animationRef.current = window.requestAnimationFrame(whilePlaying)
     }
   }
