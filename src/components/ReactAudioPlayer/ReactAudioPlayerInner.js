@@ -110,6 +110,7 @@ const ReactAudioPlayerInner = (props) => {
                 onClick={togglePlaying}
                 className={playBtnClass}
                 style={customStyles && customStyles.playPause}
+                id='playbutton'
               >
                 {isPlaying ? <Pause /> : <Play />}
               </button>
