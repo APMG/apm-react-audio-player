@@ -56,7 +56,7 @@ The library uses named exports for all modules.
 To import the player module:
 
 ```javascript
-import { ReactAudioPlayer } from 'apm-react-audio-player';
+import { ReactAudioPlayerInner, useAudioPlayer } from 'apm-react-audio-player';
 ```
 ## Usage
 
@@ -93,8 +93,6 @@ Prop | Type | Default | Notes
 ```javascript
 import { ReactAudioPlayerInner, useAudioPlayer } from 'apm-react-audio-player';
 
-const AudioPlayerContext = React.createContext(defaultAudioState);
-
 const Example = () => {
 
   const audioPlayerRef = React.useRef();
@@ -120,26 +118,30 @@ const Example = () => {
 
     return (
        <ReactAudioPlayerInner
-        {...props}
         title={'MPR NEWS'}
         audioSrc={'https://play.publicradio.org/web/o/minnesota/podcasts/art_hounds/2024/06/26/arthounds_art-hounds-franconia_20240626_64.mp3'}
         description={'description'}
         playBtnClass="player-btn player-btn-playpause js-player-play"
         audioPlayerRef={audioPlayerRef}
         progressBarRef={progressBarRef}
+           onLoadedMetadata={onLoadedMetadata}
+        play={play}
         isPlaying={isPlaying}
+        togglePlaying={togglePlaying}
         isMuted={isMuted}
         currentTime={currentTime}
         duration={duration}
+        isAudioFinished={isFinishedPlaying}
         toggleMute={toggleMute}
-        isMuted={isMuted}
         volumeCtrl={volumeControl}
         changePlayerCurrentTime={changePlayerCurrentTime}
         rewindControl={rewindControl}
         forwardControl={forwardControl}
+        calculateTime={calculateTime}
+        formatCalculateTime={formatCalculateTime}
         customHtml={<></>}
     />
-    )
+  )
 }
 ```
 
