@@ -11,16 +11,16 @@ const ReactAudioPlayer = (props) => {
 
   // hooks
   const {
+    isPlaying,
+    currentTime,
+    duration,
+    isMuted,
     onLoadedMetadata,
     calculateTime,
     togglePlaying,
     changePlayerCurrentTime,
-    isPlaying,
-    currentTime,
-    duration,
     volumeControl,
     toggleMute,
-    isMuted,
     formatCalculateTime,
     rewindControl,
     forwardControl
