@@ -76,7 +76,7 @@ Prop | Type | Default | Notes
 `isPlaying` | Boolean | false | Whether the audio is currently playing
 `isMuted` | Boolean | false | Whether the audio is currently muted
 `toggleMute` | Function | --- | A function to toggle the mute state
-`volumeControl` | Function | --- | A function to control the volume
+`volumeCtrl` | Function | --- | A function to control the volume
 `currentTime` | Number | null | The current time of the audio track
 `duration` | Number | null | The duration of the audio track
 `rewindControl` | Function | --- | A function to rewind the audio track
