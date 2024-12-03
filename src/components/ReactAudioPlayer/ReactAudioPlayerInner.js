@@ -27,7 +27,9 @@ const ReactAudioPlayerInner = (props) => {
     isMuted,
     formatCalculateTime,
     rewindControl,
-    forwardControl
+    forwardControl,
+    subtitle,
+    prefix
   } = props
 
   const audioDuration = duration && !isNaN(duration) && calculateTime(duration)
@@ -158,14 +160,18 @@ const ReactAudioPlayerInner = (props) => {
             {customHtml && customHtml}
             <div className='player-audio-type type-sm'>
               {isLive ? (
-                <div className='player-live-label'>On Air</div>
+                <div className='player-live-label'>
+                  {prefix ? prefix : 'On Air'}
+                </div>
               ) : (
                 <div className='player-label'>
                   listen
                   <div className='player-label-duration'>{`[${formatDuration}]`}</div>
                 </div>
               )}
-              <div className='player-title'>{title || ''} </div>
+              <div className='player-title'>
+                {title || ''} {subtitle && `by ${subtitle}`}{' '}
+              </div>
             </div>
           </div>
         </div>
