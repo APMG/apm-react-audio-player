@@ -1,6 +1,6 @@
 {
   "name": "apm-react-audio-player",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "author": "Jason Phan <jphan@mpr.org>",
   "license": "MIT",
   "private": false,
@@ -12,10 +12,10 @@
   "module": "dist/index.modern.js",
   "source": "src/index.js",
   "engines": {
-    "node": ">=10"
+    "node": ">=20"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c rollup.config.mjs",
     "dev": "rollup -c -w",
     "test": "jest --watch",
     "test:ci": "jest",
@@ -25,11 +25,14 @@
     "prettier:fix": "prettier --check '**/**.js' --write",
     "clean": "rm -rf node_modules dist package-lock.json yarn.lock"
   },
+  "assert": {
+    "type": "json"
+  },
   "peerDependencies": {
     "react": "^16.0.0"
   },
   "dependencies": {
-    "rollup": "^1.17.0",
+    "rollup": "^4.29.1",
     "rollup-plugin-babel": "^4.3.3"
   },
   "devDependencies": {
@@ -50,14 +53,17 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
-    "prettier": "^2.0.4",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-scripts": "^3.4.1",
-    "rollup-plugin-json": "^4.0.0",
     "jest": "^24.8.0",
     "jest-environment-jsdom-fourteen": "^0.1.0",
-    "jest-prop-type-error": "^1.1.0"
+    "jest-prop-type-error": "^1.1.0",
+    "prettier": "^2.0.4",
+    "react": "^18",
+    "react-dom": "^18",
+    "rollup-plugin-json": "^4.0.0"
+  },
+  "resolutions": {
+    "braces": ">=3.0.3",
+    "react-scripts": "^5.0.1"
   },
   "files": [
     "dist"
