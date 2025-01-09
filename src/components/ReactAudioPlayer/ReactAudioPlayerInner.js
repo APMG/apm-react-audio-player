@@ -129,32 +129,28 @@ const ReactAudioPlayerInner = (props) => {
             )}
           </div>
           {!isLive && (
-            <>
-              <div className='player-timeline'>
-                <div className='player-timeline-progress-outer'>
-                  <input
-                    type='range'
-                    className='player-timeline-progress'
-                    defaultValue='0'
-                    ref={progressBarRef}
-                    onChange={changePlayerCurrentTime}
-                    aria-label='Audio progress'
-                    max={duration}
-                  />
-                </div>
-                <div className='player-times'>
-                  <div className='player-currentTime'>
-                    {calculateTime(currentTime)}
-                  </div>
-                  <div
-                    className='player-duration'
-                    style={customStyles && customStyles.duration}
-                  >
-                    {duration && !isNaN(duration) && calculateTime(duration)}
-                  </div>
-                </div>
+            <div className='player-timeline'>
+              <div className='player-currentTime'>
+                {calculateTime(currentTime)}
               </div>
-            </>
+              <div className='player-timeline-progress-outer'>
+                <input
+                  type='range'
+                  className='player-timeline-progress'
+                  defaultValue='0'
+                  ref={progressBarRef}
+                  onChange={changePlayerCurrentTime}
+                  aria-label='Audio progress'
+                  max={duration}
+                />
+              </div>
+              <div
+                className='player-duration'
+                style={customStyles && customStyles.duration}
+              >
+                {duration && !isNaN(duration) && calculateTime(duration)}
+              </div>
+            </div>
           )}
           <div className='player-content'>
             {customHtml && customHtml}
