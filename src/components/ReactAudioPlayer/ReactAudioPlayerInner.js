@@ -148,7 +148,9 @@ const ReactAudioPlayerInner = (props) => {
                 className='player-duration'
                 style={customStyles && customStyles.duration}
               >
-                {duration && !isNaN(duration) && calculateTime(duration)}
+                {duration && !isNaN(duration)
+                  ? calculateTime(duration)
+                  : '-- : --'}
               </div>
             </div>
           )}
