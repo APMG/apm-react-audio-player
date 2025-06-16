@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 
-export const useAudioPlayer = (audioRef, progressBarRef, volumeCtrl) => {
+export const useAudioPlayer = (
+  audioRef,
+  progressBarRef,
+  volumeCtrl,
+  initialDuration = undefined
+) => {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [duration, setDuration] = useState(0)
+  const [duration, setDuration] = useState(initialDuration)
   const [currentTime, setCurrentTime] = useState(0)
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
