@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLS Audio Player React Example</title>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Import map to resolve React from CDN for ES modules -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18",
+        "react-dom": "https://esm.sh/react-dom@18"
+      }
+    }
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Import the component as a module -->
+    <script type="text/babel" data-type="module">
+        const { useState, useEffect, useRef } = React;
+
+        // Import from the built ES module
+        import { ReactAudioPlayerInner, useAudioPlayer } from '../dist/index.modern.js';
+
+        const HLSExample = () => {
+          return (
+            <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+              <h1>HLS Audio Player Examples</h1>
+
+              {/* Example 1: HLS with Progressive Enhancement */}
+              <section style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                <h2>Example 1: HLS with Progressive Enhancement</h2>
+                <p style={{ background: '#f0f0f0', padding: '10px', borderRadius: '3px' }}>
+                  <strong>Sources:</strong> HLS (.m3u8) → MP3<br />
+                  <strong>Expected:</strong> Modern browsers use HLS, older browsers fall back to MP3
+                </p>
+                <HLSPlayer
+                  title="Apple Test Stream"
+                  audioSrc={[
+                    'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8',
+                    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+                  ]}
+                />
+              </section>
+
+              {/* Example 2: HLS Live Stream */}
+              <section style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                <h2>Example 2: HLS Live Stream</h2>
+                <p style={{ background: '#f0f0f0', padding: '10px', borderRadius: '3px' }}>
+                  <strong>Source:</strong> HLS live stream (.m3u8)<br />
+                  <strong>Expected:</strong> Timeline controls hidden, "On Air" label shown
+                </p>
+                <HLSPlayer
+                  title="MPR Current Live"
+                  audioSrc={[
+                    'https://hls.stream.publicradio.org/current-hls/playlist.m3u8',
+                    'https://current.stream.publicradio.org/current.aac'
+                  ]}
+                />
+              </section>
+
+              {/* Example 3: Regular MP3 */}
+              <section style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                <h2>Example 3: Regular MP3 (Backward Compatible)</h2>
+                <p style={{ background: '#f0f0f0', padding: '10px', borderRadius: '3px' }}>
+                  <strong>Source:</strong> MP3 only (single string)<br />
+                  <strong>Expected:</strong> Timeline controls shown, duration displayed
+                </p>
+                <HLSPlayer
+                  title="Regular Audio Track"
+                  audioSrc="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+                />
+              </section>
+
+              {/* Browser Info */}
+              <section style={{ padding: '20px', background: '#1e1e1e', color: '#00ff00', borderRadius: '5px' }}>
+                <h3 style={{ marginTop: 0, color: '#00ff00' }}>Browser Information</h3>
+                <BrowserInfo />
+              </section>
+            </div>
+          );
+        };
+
+        const HLSPlayer = ({ title, audioSrc }) => {
+          const audioPlayerRef = useRef();
+          const progressBarRef = useRef();
+
+          const {
+            isPlaying,
+            currentTime,
+            duration,
+            isMuted,
+            onLoadedMetadata,
+            calculateTime,
+            togglePlaying,
+            changePlayerCurrentTime,
+            volumeControl,
+            toggleMute,
+            formatCalculateTime,
+            rewindControl,
+            forwardControl
+          } = useAudioPlayer(audioPlayerRef, progressBarRef);
+
+          useEffect(() => {
+            if (duration !== undefined) {
+              const isLive = duration === Infinity;
+              console.log(`[${title}] Loaded:`, {
+                duration: isLive ? 'Infinity (LIVE)' : `${duration}s`,
+                source: audioPlayerRef.current?.currentSrc,
+                isLive
+              });
+            }
+          }, [duration, title]);
+
+          return (
+            <ReactAudioPlayerInner
+              title={title}
+              audioSrc={audioSrc}
+              audioPlayerRef={audioPlayerRef}
+              progressBarRef={progressBarRef}
+              onLoadedMetadata={onLoadedMetadata}
+              isPlaying={isPlaying}
+              togglePlaying={togglePlaying}
+              isMuted={isMuted}
+              currentTime={currentTime}
+              duration={duration}
+              toggleMute={toggleMute}
+              volumeCtrl={volumeControl}
+              changePlayerCurrentTime={changePlayerCurrentTime}
+              rewindControl={rewindControl}
+              forwardControl={forwardControl}
+              calculateTime={calculateTime}
+              formatCalculateTime={formatCalculateTime}
+            />
+          );
+        };
+
+        const BrowserInfo = () => {
+          const [hlsSupported, setHlsSupported] = useState(false);
+
+          useEffect(() => {
+            const audio = document.createElement('audio');
+            const supported = audio.canPlayType('application/x-mpegURL') !== '';
+            setHlsSupported(supported);
+          }, []);
+
+          return (
+            <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+              <div>Browser: {navigator.userAgent}</div>
+              <div>Platform: {navigator.platform}</div>
+              <div style={{ color: hlsSupported ? '#00ffff' : '#ffff00' }}>
+                Native HLS Support: {hlsSupported ? 'YES ✓' : 'NO ✗'}
+              </div>
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
+                Check the browser console for detailed playback information.
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<HLSExample />);
+    </script>
+</body>
+</html>

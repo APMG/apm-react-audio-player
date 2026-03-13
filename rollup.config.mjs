@@ -10,7 +10,10 @@ export default [
   {
     input: 'src/index.js',
     external: defaultExternal,
-    output: [{ file: pkg.main, format: 'cjs' }],
+    output: [
+      { file: pkg.main, format: 'cjs' },
+      { file: pkg.module, format: 'es' }
+    ],
     plugins: [
       babel({
         exclude: ['node_modules/**', '*.json']

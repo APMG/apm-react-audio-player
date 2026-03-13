@@ -13,7 +13,7 @@ export const useAudioPlayer = (
   const animationRef = useRef() // reference the animation
   const [isMuted, setIsMuted] = useState(false)
   const isStream =
-    audioRef.current && audioRef.current.currentSrc.includes('stream')
+    audioRef.current && audioRef.current.duration === Infinity
 
   useEffect(() => {
     if (currentTime === Number(duration)) {
@@ -26,7 +26,7 @@ export const useAudioPlayer = (
     const seconds = Math.floor(audioRef.current.duration)
     setDuration(seconds)
 
-    if (!audioRef?.current?.currentSrc.includes('stream')) {
+    if (audioRef.current.duration !== Infinity) {
       progressBarRef.current.max = seconds
     }
   }
@@ -36,9 +36,7 @@ export const useAudioPlayer = (
   }
 
   const whilePlaying = () => {
-    if (!audioRef?.current?.currentSrc.includes('stream')) {
-      // isStream isn't correct here
-
+    if (audioRef.current.duration !== Infinity) {
       progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
     }
 
@@ -73,8 +71,7 @@ export const useAudioPlayer = (
     setIsPlaying(true)
     setIsFinishedPlaying(false)
     audioRef.current.play()
-    if (!audioRef.current.currentSrc.includes('stream')) {
-      // isStream isn't correctly set here
+    if (audioRef.current.duration !== Infinity) {
       animationRef.current = window.requestAnimationFrame(whilePlaying)
     }
   }

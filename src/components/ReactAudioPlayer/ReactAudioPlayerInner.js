@@ -2,6 +2,24 @@ import React, { useRef } from 'react'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
 
+const getTypeFromExtension = (url) => {
+  const extension = url.split('.').pop().split('?')[0]
+  switch (extension) {
+    case 'm3u8':
+      return 'application/x-mpegURL'
+    case 'aac':
+      return 'audio/aac'
+    case 'mp3':
+      return 'audio/mpeg'
+    case 'ogg':
+      return 'audio/ogg'
+    case 'wav':
+      return 'audio/wav'
+    default:
+      return undefined // Let browser auto-detect
+  }
+}
+
 const ReactAudioPlayerInner = (props) => {
   // references
   const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
@@ -14,7 +32,6 @@ const ReactAudioPlayerInner = (props) => {
     volumeCtrl,
     playBtnClass,
     customHtml,
-    isLive,
     onLoadedMetadata,
     calculateTime,
     togglePlaying,
@@ -48,11 +65,23 @@ const ReactAudioPlayerInner = (props) => {
       >
         <audio
           ref={audioPlayerRef}
-          src={audioSrc}
           preload='none'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
-        />
+        >
+          {Array.isArray(audioSrc) ? (
+            audioSrc.map((src, index) => (
+              <source
+                key={index}
+                src={src}
+                type={getTypeFromExtension(src)}
+              />
+            ))
+          ) : audioSrc ? (
+            <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />
+          ) : null}
+          Your browser does not support the audio element.
+        </audio>
         <div className='player-layout'>
           {volumeCtrl && (
             <div className='player-controls-secondary-outer'>
@@ -93,7 +122,7 @@ const ReactAudioPlayerInner = (props) => {
             </div>
           )}
           <div className='player-controls'>
-            {!isLive && (
+            {duration !== Infinity && (
               <div className='player-backward-forward-controls'>
                 <button onClick={rewindControl}>
                   <img
@@ -117,7 +146,7 @@ const ReactAudioPlayerInner = (props) => {
                 {isPlaying ? <Pause /> : <Play />}
               </button>
             </div>
-            {!isLive && (
+            {duration !== Infinity && (
               <div className='player-backward-forward-controls'>
                 <button onClick={forwardControl}>
                   <img
@@ -128,7 +157,7 @@ const ReactAudioPlayerInner = (props) => {
               </div>
             )}
           </div>
-          {!isLive && (
+          {duration !== Infinity && (
             <div className='player-timeline'>
               <div className='player-currentTime'>
                 {calculateTime(currentTime)}
@@ -157,7 +186,7 @@ const ReactAudioPlayerInner = (props) => {
           <div className='player-content'>
             {customHtml && customHtml}
             <div className='player-audio-type type-sm'>
-              {isLive ? (
+              {duration === Infinity ? (
                 <div className='player-live-label'>
                   {prefix ? prefix : 'On Air'}
                 </div>

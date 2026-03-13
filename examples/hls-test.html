@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLS Audio Player Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        #console {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>HLS Audio Player Test Page</h1>
+
+    <div id="console"></div>
+
+    <div class="test-section">
+        <h2>Test 1: HLS Live Stream with Progressive Enhancement</h2>
+        <div class="info">
+            <strong>Sources:</strong> HLS (.m3u8) → AAC → MP3<br>
+            <strong>Expected:</strong> Modern browsers use HLS, older browsers fall back to AAC/MP3<br>
+            <strong>Duration:</strong> Should be Infinity (live stream)
+        </div>
+        <audio id="player1" controls preload="none">
+            <source src="https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8" type="application/x-mpegURL">
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: HLS VOD (Video on Demand)</h2>
+        <div class="info">
+            <strong>Sources:</strong> HLS (.m3u8) → MP3<br>
+            <strong>Expected:</strong> Finite duration, seek controls enabled<br>
+            <strong>Note:</strong> Using Apple's test stream
+        </div>
+        <audio id="player2" controls preload="none">
+            <source src="https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8" type="application/x-mpegURL">
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Regular MP3 (Non-HLS)</h2>
+        <div class="info">
+            <strong>Sources:</strong> MP3 only<br>
+            <strong>Expected:</strong> Finite duration, seek controls enabled<br>
+            <strong>Duration:</strong> Should be ~6 minutes
+        </div>
+        <audio id="player3" controls preload="none">
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: MPR Radio Live Stream</h2>
+        <div class="info">
+            <strong>Sources:</strong> HLS (.m3u8) only<br>
+            <strong>Expected:</strong> Live stream, duration = Infinity<br>
+            <strong>Note:</strong> Minnesota Public Radio stream
+        </div>
+        <audio id="player4" controls preload="none">
+            <source src="https://current.stream.publicradio.org/current.m3u8" type="application/x-mpegURL">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <script>
+        const consoleEl = document.getElementById('console');
+
+        function log(message, type = 'info') {
+            const colors = {
+                info: '#00ff00',
+                error: '#ff0000',
+                warn: '#ffff00',
+                success: '#00ffff'
+            };
+            const timestamp = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.style.color = colors[type];
+            line.textContent = `[${timestamp}] ${message}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // Log browser info
+        log(`Browser: ${navigator.userAgent}`, 'info');
+        log(`Platform: ${navigator.platform}`, 'info');
+
+        // Test HLS support
+        const audio = document.createElement('audio');
+        const hlsSupported = audio.canPlayType('application/x-mpegURL') !== '';
+        log(`Native HLS Support: ${hlsSupported ? 'YES ✓' : 'NO ✗'}`, hlsSupported ? 'success' : 'warn');
+
+        // Monitor all players
+        const players = ['player1', 'player2', 'player3', 'player4'];
+
+        players.forEach(playerId => {
+            const player = document.getElementById(playerId);
+
+            player.addEventListener('loadedmetadata', () => {
+                const duration = player.duration;
+                const isLive = duration === Infinity;
+                const currentSrc = player.currentSrc;
+                const extension = currentSrc.split('.').pop().split('?')[0];
+
+                log(`${playerId}: Loaded metadata`, 'success');
+                log(`  - Duration: ${isLive ? 'Infinity (LIVE)' : duration + 's'}`, 'info');
+                log(`  - Source: ${extension.toUpperCase()}`, 'info');
+                log(`  - URL: ${currentSrc.substring(0, 50)}...`, 'info');
+            });
+
+            player.addEventListener('error', (e) => {
+                log(`${playerId}: Error loading audio`, 'error');
+                log(`  - Error code: ${player.error?.code}`, 'error');
+                log(`  - Error message: ${player.error?.message}`, 'error');
+            });
+
+            player.addEventListener('play', () => {
+                log(`${playerId}: Started playing`, 'success');
+            });
+
+            player.addEventListener('pause', () => {
+                log(`${playerId}: Paused`, 'info');
+            });
+
+            player.addEventListener('ended', () => {
+                log(`${playerId}: Playback ended`, 'info');
+            });
+        });
+
+        log('Ready for testing! Click play on any player above.', 'success');
+    </script>
+</body>
+</html>

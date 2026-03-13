@@ -21,6 +21,11 @@ The library was designed to add a audio player to a body of a story which will n
   - [Props](#props)
   - [Example](#example)
 
+[HLS Support](#hls-support)
+  - [Browser Compatibility](#browser-compatibility)
+  - [HLS Usage Examples](#hls-usage-examples)
+  - [Live Stream Detection](#live-stream-detection)
+
 [License] (#License)
 
 
@@ -67,7 +72,7 @@ See the [audio tag documentation](https://developer.mozilla.org/en-US/docs/Web/H
 Prop | Type | Default | Notes
 --- | --- | --- | ---
 `title` | String | *empty string* | The title of the audio track
-`audioSrc` | String | *empty string* | The source URL of the audio file
+`audioSrc` | String or Array | *empty string* | **String:** Single audio source URL<br>**Array:** Multiple source URLs for progressive enhancement (e.g., `['stream.m3u8', 'audio.aac', 'audio.mp3']`)
 `description` | String | *empty string* | The description of the audio track
 `audioPlayerRef` | Object | *empty object* | A ref object for the audio player
 `progressBarRef` | Object | *empty object* | A ref object for the progress bar
@@ -144,6 +149,99 @@ const Example = () => {
   )
 }
 ```
+
+## HLS Support
+
+The audio player now supports HLS (HTTP Live Streaming) for both live streams and pre-recorded content using native browser support. The player uses HTML5 `<source>` tags for progressive enhancement, allowing browsers to fall back to alternate formats if HLS is not supported.
+
+### Browser Compatibility
+
+| Browser | HLS Support | Fallback Behavior |
+|---------|------------|-------------------|
+| Safari (all versions) | Native ✓ | N/A |
+| iOS Safari | Native ✓ | N/A |
+| Chrome 142+ | Native ✓ | N/A |
+| Edge 142+ | Native ✓ | N/A |
+| Mobile Chrome/Android | Native ✓ | N/A |
+| Chrome <142 | None | Automatically uses AAC/MP3 |
+| Firefox | None | Automatically uses AAC/MP3 |
+| Edge <142 | None | Automatically uses AAC/MP3 |
+
+**Note:** Chrome and Edge added native HLS support in version 142 (December 2024). Older versions will automatically skip HLS sources and use alternative formats.
+
+### HLS Usage Examples
+
+**See `examples/hls-example.jsx` for a complete working example with multiple HLS scenarios.**
+
+#### Basic HLS with Progressive Enhancement
+
+Provide multiple source formats to ensure compatibility across all browsers:
+
+```javascript
+<ReactAudioPlayerInner
+  title="Podcast Episode"
+  audioSrc={[
+    'https://example.com/episode.m3u8',
+    'https://example.com/episode.aac',
+    'https://example.com/episode.mp3'
+  ]}
+  // ... other props
+/>
+```
+
+Browsers will try sources in order:
+1. Modern browsers (Safari, Chrome 142+, Edge 142+) will play the HLS stream
+2. Older browsers will skip the .m3u8 and fall back to AAC or MP3
+
+#### Live Radio Stream
+
+```javascript
+<ReactAudioPlayerInner
+  title="Live Radio"
+  audioSrc={['https://stream.example.com/live.m3u8']}
+  // ... other props
+/>
+```
+
+#### Single Source (Backward Compatible)
+
+The player maintains backward compatibility with the original single-source API:
+
+```javascript
+<ReactAudioPlayerInner
+  title="Audio Track"
+  audioSrc="https://example.com/audio.mp3"
+  // ... other props
+/>
+```
+
+### Live Stream Detection
+
+The player automatically detects live streams using the HTML5 audio `duration` property:
+
+- **Live streams:** `duration === Infinity`
+  - Timeline/seek controls are hidden
+  - Rewind/forward buttons are hidden
+  - "On Air" label is displayed
+
+- **Pre-recorded audio:** `duration` is a finite number
+  - Timeline/seek controls are shown
+  - Rewind/forward buttons are shown
+  - Duration is displayed
+
+No additional props are needed - the player automatically adapts its UI based on whether the content is live or pre-recorded.
+
+### Supported Audio Formats
+
+The player automatically detects MIME types from file extensions:
+
+| Extension | MIME Type |
+|-----------|-----------|
+| `.m3u8` | `application/x-mpegURL` |
+| `.mp3` | `audio/mpeg` |
+| `.aac` | `audio/aac` |
+| `.ogg` | `audio/ogg` |
+| `.wav` | `audio/wav` |
 
 ## Publishing
 

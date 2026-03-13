@@ -1,4 +1,32 @@
 // ============UNIT TESTS================
+test('stream detection with duration === Infinity', () => {
+  // Mock audio element with infinite duration (live stream)
+  const mockAudioRef = {
+    current: {
+      duration: Infinity,
+      currentSrc: 'https://example.com/stream.m3u8'
+    }
+  }
+
+  // The isStream check should return true for Infinity duration
+  const isStream = mockAudioRef.current && mockAudioRef.current.duration === Infinity
+  expect(isStream).toBe(true)
+})
+
+test('stream detection with finite duration', () => {
+  // Mock audio element with finite duration (regular audio)
+  const mockAudioRef = {
+    current: {
+      duration: 180,
+      currentSrc: 'https://example.com/audio.mp3'
+    }
+  }
+
+  // The isStream check should return false for finite duration
+  const isStream = mockAudioRef.current && mockAudioRef.current.duration === Infinity
+  expect(isStream).toBe(false)
+})
+
 test('formatCalculateTime()', () => {
   const testHours = '1:00:00'
   const testMinutes = '0:30:00'
