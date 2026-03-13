@@ -155,3 +155,11 @@ const BrowserInfo = () => {
 }
 
 export default HLSExample
+
+// Auto-render when loaded as a module
+if (typeof document !== 'undefined') {
+  import('react-dom/client').then(({ createRoot }) => {
+    const root = createRoot(document.getElementById('root'))
+    root.render(<HLSExample />)
+  })
+}

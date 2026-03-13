@@ -5,16 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HLS Audio Player React Example</title>
 
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Import map to resolve React from CDN for ES modules -->
+    <!-- Import map to resolve React modules -->
     <script type="importmap">
     {
       "imports": {
-        "react": "https://esm.sh/react@18",
-        "react-dom": "https://esm.sh/react-dom@18"
+        "react": "https://esm.sh/react@18.3.1",
+        "react/": "https://esm.sh/react@18.3.1/",
+        "react-dom": "https://esm.sh/react-dom@18.3.1",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
       }
     }
     </script>
@@ -25,156 +23,318 @@
             margin: 0;
             padding: 0;
         }
+
+        /* React Audio Player CSS */
+        .audioPlayer {
+            --primary: rgb(70, 84, 103);
+            --secondary: #ffffff;
+
+            align-items: center;
+            display: flex;
+            width: 800px;
+            background-color: #f2f4f7;
+            padding: 1.6rem 1rem 1.6rem 1rem;
+            border-radius: 5px;
+        }
+
+        .forwardBackward {
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            font-family: monospace;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
+        .forwardBackward:hover {
+            color: var(--primary);
+        }
+
+        .playPause {
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            color: var(--secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .play {
+            position: relative;
+            left: 3px;
+        }
+
+        .currentTime,
+        .duration {
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            font-size: 12px;
+            font-weight: 100;
+            color: rgb(104, 118, 123);
+        }
+
+        .currentTime {
+            margin-left: 1.5rem;
+        }
+
+        .progressBar {
+            --bar-bg: rgb(169, 186, 192);
+            --seek-before-width: 0;
+            --seek-before-color: rgb(104, 118, 123);
+            --knobby: #3452a5;
+            --selectedKnobby: #26c9c3;
+
+            appearance: none;
+            background: var(--bar-bg);
+            border-radius: 10px;
+            position: relative;
+            width: 18rem;
+            height: 8px;
+            outline: none;
+        }
+
+        .progressBarContainer {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .progressBarContainer input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+        }
+
+        /* progress bar - chrome and safari */
+        .progressBar::-webkit-slider-runnable-track {
+            background: var(--bar-bg);
+            border-radius: 10px;
+            position: relative;
+            width: 100%;
+            height: 8px;
+            outline: none;
+        }
+
+        /* progress bar - firefox */
+        .progressBar::-moz-range-track {
+            background: var(--bar-bg);
+            border-radius: 10px;
+            position: relative;
+            width: 100%;
+            height: 8px;
+            outline: none;
+        }
+
+        .progressBar::-moz-focus-outer {
+            border: 0;
+        }
+
+        /* progress bar before - chrome and safari */
+        .progressBar::before {
+            content: '';
+            height: 8px;
+            width: var(--seek-before-width);
+            background-color: var(--seek-before-color);
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            cursor: pointer;
+        }
+
+        /* progress bar before - firefox */
+        .progressBar::-moz-range-progress {
+            background-color: var(--seek-before-color);
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            height: 8px;
+        }
+
+        /* knobby - chrome and safari */
+        .progressBar::-webkit-slider-thumb {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--knobby);
+            cursor: pointer;
+            position: relative;
+            margin: -1px 0 0 -1.5px;
+            z-index: 3;
+            box-sizing: border-box;
+        }
+
+        /* knobby while dragging - chrome and safari */
+        .progressBar:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+            background: var(--selectedKnobby);
+        }
+
+        /* knobby - firefox */
+        .progressBar::-moz-range-thumb {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            border: transparent;
+            background-color: var(--knobby);
+            cursor: pointer;
+            position: relative;
+            z-index: 3;
+            box-sizing: border-box;
+        }
+
+        /* knobby while dragging - firefox */
+        .progressBar:active::-moz-range-thumb {
+            transform: scale(1.2);
+            background: var(--selectedKnobby);
+        }
+
+        .textBox {
+            padding-left: 1rem;
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            font-size: 12px;
+            font-weight: 100;
+        }
+
+        .textBoxTitle {
+            font-size: 1rem;
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* Layout fixes for horizontal controls */
+        .player-layout {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .player-controls {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+        }
+
+        .player-controls-primary {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-backward-forward-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .player-backward-forward-controls button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+        }
+
+        .player-btn-play-pause-outer button {
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            color: var(--secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .player-controls-secondary-outer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-volume-icon button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+        }
+
+        .player-volume-icon img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .player-backward-forward-controls img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .player-volume-slider {
+            width: 80px;
+        }
+
+        .player-volume-progress,
+        .player-timeline-progress {
+            width: 150px;
+        }
+
+        .player-timeline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-timeline-progress-outer {
+            flex: 1;
+        }
+
+        .player-currentTime,
+        .player-duration {
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            font-size: 12px;
+            font-weight: 100;
+            color: rgb(104, 118, 123);
+            min-width: 45px;
+        }
+
+        .player-content {
+            padding-left: 1rem;
+        }
+
+        .player-title {
+            font-weight: 600;
+        }
+
+        .player-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .player-volume-label {
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
-    <!-- Import the component as a module -->
-    <script type="text/babel" data-type="module">
-        const { useState, useEffect, useRef } = React;
-
-        // Import from the built ES module
-        import { ReactAudioPlayerInner, useAudioPlayer } from '../dist/index.modern.js';
-
-        const HLSExample = () => {
-          return (
-            <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
-              <h1>HLS Audio Player Examples</h1>
-
-              {/* Example 1: HLS with Progressive Enhancement */}
-              <section style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <h2>Example 1: HLS with Progressive Enhancement</h2>
-                <p style={{ background: '#f0f0f0', padding: '10px', borderRadius: '3px' }}>
-                  <strong>Sources:</strong> HLS (.m3u8) → MP3<br />
-                  <strong>Expected:</strong> Modern browsers use HLS, older browsers fall back to MP3
-                </p>
-                <HLSPlayer
-                  title="Apple Test Stream"
-                  audioSrc={[
-                    'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8',
-                    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-                  ]}
-                />
-              </section>
-
-              {/* Example 2: HLS Live Stream */}
-              <section style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <h2>Example 2: HLS Live Stream</h2>
-                <p style={{ background: '#f0f0f0', padding: '10px', borderRadius: '3px' }}>
-                  <strong>Source:</strong> HLS live stream (.m3u8)<br />
-                  <strong>Expected:</strong> Timeline controls hidden, "On Air" label shown
-                </p>
-                <HLSPlayer
-                  title="MPR Current Live"
-                  audioSrc={[
-                    'https://hls.stream.publicradio.org/current-hls/playlist.m3u8',
-                    'https://current.stream.publicradio.org/current.aac'
-                  ]}
-                />
-              </section>
-
-              {/* Example 3: Regular MP3 */}
-              <section style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <h2>Example 3: Regular MP3 (Backward Compatible)</h2>
-                <p style={{ background: '#f0f0f0', padding: '10px', borderRadius: '3px' }}>
-                  <strong>Source:</strong> MP3 only (single string)<br />
-                  <strong>Expected:</strong> Timeline controls shown, duration displayed
-                </p>
-                <HLSPlayer
-                  title="Regular Audio Track"
-                  audioSrc="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
-                />
-              </section>
-
-              {/* Browser Info */}
-              <section style={{ padding: '20px', background: '#1e1e1e', color: '#00ff00', borderRadius: '5px' }}>
-                <h3 style={{ marginTop: 0, color: '#00ff00' }}>Browser Information</h3>
-                <BrowserInfo />
-              </section>
-            </div>
-          );
-        };
-
-        const HLSPlayer = ({ title, audioSrc }) => {
-          const audioPlayerRef = useRef();
-          const progressBarRef = useRef();
-
-          const {
-            isPlaying,
-            currentTime,
-            duration,
-            isMuted,
-            onLoadedMetadata,
-            calculateTime,
-            togglePlaying,
-            changePlayerCurrentTime,
-            volumeControl,
-            toggleMute,
-            formatCalculateTime,
-            rewindControl,
-            forwardControl
-          } = useAudioPlayer(audioPlayerRef, progressBarRef);
-
-          useEffect(() => {
-            if (duration !== undefined) {
-              const isLive = duration === Infinity;
-              console.log(`[${title}] Loaded:`, {
-                duration: isLive ? 'Infinity (LIVE)' : `${duration}s`,
-                source: audioPlayerRef.current?.currentSrc,
-                isLive
-              });
-            }
-          }, [duration, title]);
-
-          return (
-            <ReactAudioPlayerInner
-              title={title}
-              audioSrc={audioSrc}
-              audioPlayerRef={audioPlayerRef}
-              progressBarRef={progressBarRef}
-              onLoadedMetadata={onLoadedMetadata}
-              isPlaying={isPlaying}
-              togglePlaying={togglePlaying}
-              isMuted={isMuted}
-              currentTime={currentTime}
-              duration={duration}
-              toggleMute={toggleMute}
-              volumeCtrl={volumeControl}
-              changePlayerCurrentTime={changePlayerCurrentTime}
-              rewindControl={rewindControl}
-              forwardControl={forwardControl}
-              calculateTime={calculateTime}
-              formatCalculateTime={formatCalculateTime}
-            />
-          );
-        };
-
-        const BrowserInfo = () => {
-          const [hlsSupported, setHlsSupported] = useState(false);
-
-          useEffect(() => {
-            const audio = document.createElement('audio');
-            const supported = audio.canPlayType('application/x-mpegURL') !== '';
-            setHlsSupported(supported);
-          }, []);
-
-          return (
-            <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-              <div>Browser: {navigator.userAgent}</div>
-              <div>Platform: {navigator.platform}</div>
-              <div style={{ color: hlsSupported ? '#00ffff' : '#ffff00' }}>
-                Native HLS Support: {hlsSupported ? 'YES ✓' : 'NO ✗'}
-              </div>
-              <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
-                Check the browser console for detailed playback information.
-              </div>
-            </div>
-          );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<HLSExample />);
-    </script>
+    <script type="module" src="./bundle.js"></script>
 </body>
 </html>
