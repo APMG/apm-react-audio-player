@@ -282,7 +282,7 @@ All existing code continues to work without changes:
 
 ### Manual Testing
 
-**Create example file: `examples/hls-test.html`**
+**Create example file: `examples/index.html`**
 - Standalone HTML page with the React audio player
 - Include real HLS test sources (live streams and VOD)
 - Test progressive enhancement with multiple source formats
