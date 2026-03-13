@@ -336,4 +336,60 @@ describe('ReactAudioPlayerInner rendering', () => {
     expect(liveLabel).not.toBeNull()
     expect(playerLabel).toBeNull()
   })
+
+  test('hides controls when duration is undefined (prevents flicker)', () => {
+    const props = {
+      audioSrc: 'https://example.com/audio.mp3',
+      audioPlayerRef: { current: null },
+      progressBarRef: { current: null },
+      isPlaying: false,
+      isMuted: false,
+      currentTime: 0,
+      duration: undefined,
+      onLoadedMetadata: jest.fn(),
+      calculateTime: jest.fn(() => '00:00'),
+      togglePlaying: jest.fn(),
+      changePlayerCurrentTime: jest.fn(),
+      volumeControl: jest.fn(),
+      toggleMute: jest.fn(),
+      formatCalculateTime: jest.fn(),
+      rewindControl: jest.fn(),
+      forwardControl: jest.fn()
+    }
+
+    const { container } = render(<ReactAudioPlayerInner {...props} />)
+    const timeline = container.querySelector('.player-timeline')
+    const backwardControls = container.querySelectorAll('.player-backward-forward-controls')
+
+    expect(timeline).toBeNull()
+    expect(backwardControls.length).toBe(0)
+  })
+
+  test('hides controls when duration is NaN (prevents flicker)', () => {
+    const props = {
+      audioSrc: 'https://example.com/audio.mp3',
+      audioPlayerRef: { current: null },
+      progressBarRef: { current: null },
+      isPlaying: false,
+      isMuted: false,
+      currentTime: 0,
+      duration: NaN,
+      onLoadedMetadata: jest.fn(),
+      calculateTime: jest.fn(() => '00:00'),
+      togglePlaying: jest.fn(),
+      changePlayerCurrentTime: jest.fn(),
+      volumeControl: jest.fn(),
+      toggleMute: jest.fn(),
+      formatCalculateTime: jest.fn(),
+      rewindControl: jest.fn(),
+      forwardControl: jest.fn()
+    }
+
+    const { container } = render(<ReactAudioPlayerInner {...props} />)
+    const timeline = container.querySelector('.player-timeline')
+    const backwardControls = container.querySelectorAll('.player-backward-forward-controls')
+
+    expect(timeline).toBeNull()
+    expect(backwardControls.length).toBe(0)
+  })
 })

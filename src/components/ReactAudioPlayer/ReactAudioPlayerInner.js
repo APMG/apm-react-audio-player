@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
 
@@ -57,6 +57,31 @@ const ReactAudioPlayerInner = (props) => {
     audioDuration &&
     formatCalculateTime(audioDuration)
 
+  // Reload audio when audioSrc changes
+  useEffect(() => {
+    if (audioPlayerRef.current && audioSrc) {
+      try {
+        audioPlayerRef.current.load()
+      } catch (err) {
+        console.warn('Failed to reload audio source:', err)
+      }
+    }
+  }, [audioSrc])
+
+  // Set initial volume to 100%
+  useEffect(() => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.volume = 1.0
+    }
+  }, [])
+
+  // Helper to determine if controls should show
+  const showControls =
+    duration !== Infinity &&
+    duration !== undefined &&
+    !isNaN(duration) &&
+    isFinite(duration)
+
   return (
     audioSrc && (
       <div
@@ -109,6 +134,7 @@ const ReactAudioPlayerInner = (props) => {
                     className='player-volume-progress'
                     min={0}
                     max={100}
+                    defaultValue={100}
                     aria-hidden='true'
                     aria-valuetext='100%'
                     onChange={(e) => volumeControl(e)}
@@ -122,7 +148,7 @@ const ReactAudioPlayerInner = (props) => {
             </div>
           )}
           <div className='player-controls'>
-            {duration !== Infinity && (
+            {showControls && (
               <div className='player-backward-forward-controls'>
                 <button onClick={rewindControl}>
                   <img
@@ -146,7 +172,7 @@ const ReactAudioPlayerInner = (props) => {
                 {isPlaying ? <Pause /> : <Play />}
               </button>
             </div>
-            {duration !== Infinity && (
+            {showControls && (
               <div className='player-backward-forward-controls'>
                 <button onClick={forwardControl}>
                   <img
@@ -157,7 +183,7 @@ const ReactAudioPlayerInner = (props) => {
               </div>
             )}
           </div>
-          {duration !== Infinity && (
+          {showControls && (
             <div className='player-timeline'>
               <div className='player-currentTime'>
                 {calculateTime(currentTime)}

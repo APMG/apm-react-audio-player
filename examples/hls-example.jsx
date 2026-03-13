@@ -118,7 +118,8 @@ const HLSPlayer = ({ title, audioSrc }) => {
       currentTime={currentTime}
       duration={duration}
       toggleMute={toggleMute}
-      volumeCtrl={volumeControl}
+      volumeCtrl={true}
+      volumeControl={volumeControl}
       changePlayerCurrentTime={changePlayerCurrentTime}
       rewindControl={rewindControl}
       forwardControl={forwardControl}

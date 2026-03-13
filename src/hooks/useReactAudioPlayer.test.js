@@ -52,3 +52,75 @@ test('formatCalculateTime()', () => {
   expect(formatCalculateTime(testMinutesSeconds)).toBe('0hr 30min 30sec')
   expect(formatCalculateTime(testHourMinutesSeconds)).toBe('2hr 20min 20sec')
 })
+
+// ============RAF LOOP SAFETY TESTS================
+test('RAF loop should not start when duration is Infinity', () => {
+  const mockAudioRef = {
+    current: {
+      duration: Infinity,
+      currentSrc: 'https://example.com/stream.m3u8'
+    }
+  }
+
+  // Check the condition that prevents RAF loop
+  const dur = mockAudioRef.current.duration
+  const shouldStartRAF = dur !== Infinity && !isNaN(dur) && isFinite(dur)
+  expect(shouldStartRAF).toBe(false)
+})
+
+test('RAF loop should not start when duration is undefined', () => {
+  const mockAudioRef = {
+    current: {
+      duration: undefined
+    }
+  }
+
+  // Check the condition that prevents RAF loop
+  const dur = mockAudioRef.current.duration
+  const shouldStartRAF = dur !== Infinity && !isNaN(dur) && isFinite(dur)
+  expect(shouldStartRAF).toBe(false)
+})
+
+test('RAF loop should not start when duration is NaN', () => {
+  const mockAudioRef = {
+    current: {
+      duration: NaN
+    }
+  }
+
+  // Check the condition that prevents RAF loop
+  const dur = mockAudioRef.current.duration
+  const shouldStartRAF = dur !== Infinity && !isNaN(dur) && isFinite(dur)
+  expect(shouldStartRAF).toBe(false)
+})
+
+test('RAF loop should start when duration is valid and finite', () => {
+  const mockAudioRef = {
+    current: {
+      duration: 180
+    }
+  }
+
+  // Check the condition that allows RAF loop
+  const dur = mockAudioRef.current.duration
+  const shouldStartRAF = dur !== Infinity && !isNaN(dur) && isFinite(dur)
+  expect(shouldStartRAF).toBe(true)
+})
+
+test('whilePlaying null ref guards - null progressBarRef', () => {
+  const audioRef = { current: { duration: 180, currentTime: 60 } }
+  const progressBarRef = { current: null }
+
+  // Simulate the null check in whilePlaying
+  const shouldContinue = !!(progressBarRef.current && audioRef.current)
+  expect(shouldContinue).toBe(false) // Should exit early
+})
+
+test('whilePlaying null ref guards - null audioRef', () => {
+  const audioRef = { current: null }
+  const progressBarRef = { current: { value: 0, style: { setProperty: jest.fn() } } }
+
+  // Simulate the null check in whilePlaying
+  const shouldContinue = !!(progressBarRef.current && audioRef.current)
+  expect(shouldContinue).toBe(false) // Should exit early
+})

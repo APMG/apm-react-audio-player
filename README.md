@@ -21,12 +21,21 @@ The library was designed to add a audio player to a body of a story which will n
   - [Props](#props)
   - [Example](#example)
 
+[Breaking Changes](#breaking-changes)
+
 [HLS Support](#hls-support)
   - [Browser Compatibility](#browser-compatibility)
   - [HLS Usage Examples](#hls-usage-examples)
   - [Live Stream Detection](#live-stream-detection)
+  - [Supported Audio Formats](#supported-audio-formats)
 
-[License] (#License)
+[Examples](#examples)
+  - [Running the Examples](#running-the-examples)
+  - [Building the Examples](#building-the-examples)
+
+[Publishing](#publishing)
+
+[License](#license)
 
 
 ## Dependencies
@@ -81,7 +90,8 @@ Prop | Type | Default | Notes
 `isPlaying` | Boolean | false | Whether the audio is currently playing
 `isMuted` | Boolean | false | Whether the audio is currently muted
 `toggleMute` | Function | --- | A function to toggle the mute state
-`volumeCtrl` | Function | --- | A function to control the volume
+`volumeCtrl` | Boolean | false | Whether to show volume controls
+`volumeControl` | Function | --- | A function to handle volume changes
 `currentTime` | Number | null | The current time of the audio track
 `duration` | Number | null | The duration of the audio track
 `rewindControl` | Function | --- | A function to rewind the audio track
@@ -138,7 +148,8 @@ const Example = () => {
         duration={duration}
         isAudioFinished={isFinishedPlaying}
         toggleMute={toggleMute}
-        volumeCtrl={volumeControl}
+        volumeCtrl={true}
+        volumeControl={volumeControl}
         changePlayerCurrentTime={changePlayerCurrentTime}
         rewindControl={rewindControl}
         forwardControl={forwardControl}
@@ -149,6 +160,33 @@ const Example = () => {
   )
 }
 ```
+
+## Breaking Changes
+
+### Version 1.0.29+
+
+**Removed `isLive` prop:** The `isLive` prop has been removed from `ReactAudioPlayerInner`. Live stream detection is now **automatic** based on the HTML5 audio `duration` property.
+
+- **Old behavior:** You had to manually pass `isLive={true}` for live streams
+- **New behavior:** The player automatically detects live streams when `duration === Infinity`
+
+**Migration:**
+```javascript
+// ❌ Old - Remove the isLive prop
+<ReactAudioPlayerInner
+  audioSrc="https://example.com/live.m3u8"
+  isLive={true}  // <-- Remove this
+  // ... other props
+/>
+
+// ✅ New - Detection is automatic
+<ReactAudioPlayerInner
+  audioSrc="https://example.com/live.m3u8"
+  // ... other props
+/>
+```
+
+The UI will automatically adapt based on the audio metadata - no manual configuration needed.
 
 ## HLS Support
 
@@ -242,6 +280,48 @@ The player automatically detects MIME types from file extensions:
 | `.aac` | `audio/aac` |
 | `.ogg` | `audio/ogg` |
 | `.wav` | `audio/wav` |
+
+## Examples
+
+The `examples/` directory contains working demonstrations of the audio player with HLS support.
+
+### Running the Examples
+
+**Option 1: Using the serve script (recommended)**
+```bash
+# Start local server and open examples in browser
+yarn serve:examples
+
+# Or using npm
+npm run serve:examples
+```
+
+This will start a local server on port 8000 and automatically open the examples page in your browser.
+
+**Option 2: Open HTML file directly**
+1. Open `examples/index.html` in a web browser
+2. The page includes three examples:
+   - HLS with progressive enhancement (fallback sources)
+   - Live HLS stream (MPR Current)
+   - Regular MP3 (backward compatible)
+
+### Building the Examples
+
+The examples use a pre-built bundle (`examples/bundle.js`). If you modify the source code and want to rebuild the examples:
+
+```bash
+# Rebuild the examples bundle
+yarn build:examples
+
+# Or using npm
+npm run build:examples
+```
+
+**Files:**
+- `examples/index.html` - Main example page with CSS and layout
+- `examples/hls-example.jsx` - React components demonstrating HLS features
+- `examples/bundle.js` - Compiled bundle (auto-generated, don't edit directly)
+- `examples/hls-test.html` - Additional test page for development
 
 ## Publishing
 

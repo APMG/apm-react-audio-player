@@ -22,28 +22,42 @@ export const useAudioPlayer = (
     }
   }, [currentTime])
 
+  useEffect(() => {
+    // Cancel RAF loop if duration changes to Infinity (live stream metadata loaded)
+    if (duration === Infinity && animationRef.current) {
+      window.cancelAnimationFrame(animationRef.current)
+    }
+  }, [duration])
+
   const onLoadedMetadata = () => {
     const seconds = Math.floor(audioRef.current.duration)
     setDuration(seconds)
 
-    if (audioRef.current.duration !== Infinity) {
+    if (audioRef.current.duration !== Infinity && progressBarRef.current) {
       progressBarRef.current.max = seconds
     }
   }
 
   const updateCurrentTime = () => {
-    setCurrentTime(progressBarRef.current.value)
+    if (progressBarRef.current) {
+      setCurrentTime(progressBarRef.current.value)
+    }
   }
 
   const whilePlaying = () => {
-    if (audioRef.current.duration !== Infinity) {
-      progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
+    // Guard against null refs (can happen when timeline unmounts for live streams)
+    if (!progressBarRef.current || !audioRef.current) {
+      return
     }
 
-    progressBarRef.current.style.setProperty(
-      '--seek-before-width',
-      `${(progressBarRef.current.value / duration) * 100}%`
-    )
+    if (audioRef.current.duration !== Infinity) {
+      progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
+      progressBarRef.current.style.setProperty(
+        '--seek-before-width',
+        `${(progressBarRef.current.value / duration) * 100}%`
+      )
+    }
+
     updateCurrentTime()
 
     // when you reach the end of the song
@@ -71,7 +85,10 @@ export const useAudioPlayer = (
     setIsPlaying(true)
     setIsFinishedPlaying(false)
     audioRef.current.play()
-    if (audioRef.current.duration !== Infinity) {
+
+    // Only start RAF loop for non-live streams with valid duration
+    const dur = audioRef.current.duration
+    if (dur !== Infinity && !isNaN(dur) && isFinite(dur)) {
       animationRef.current = window.requestAnimationFrame(whilePlaying)
     }
   }
@@ -97,6 +114,8 @@ export const useAudioPlayer = (
   }
 
   const changePlayerCurrentTime = () => {
+    if (!progressBarRef.current || !audioRef.current) return
+
     audioRef.current.currentTime = progressBarRef.current.value
     setCurrentTime(progressBarRef.current.value)
 
@@ -107,22 +126,30 @@ export const useAudioPlayer = (
   }
 
   const changeRange = () => {
+    if (!progressBarRef.current || !audioRef.current) return
+
     audioRef.current.currentTime = progressBarRef.current.value
     updateCurrentTime()
     changePlayerCurrentTime()
   }
 
   const rewindControl = () => {
+    if (!progressBarRef.current) return
+
     progressBarRef.current.value = Number(progressBarRef.current.value) - 15
     changeRange()
   }
 
   const forwardControl = () => {
+    if (!progressBarRef.current) return
+
     progressBarRef.current.value = Number(progressBarRef.current.value) + 15
     changeRange()
   }
 
   const volumeControl = (e) => {
+    if (!audioRef.current) return
+
     const { value } = e.target
     const volume = value / 100
     audioRef.current.volume = volume
