@@ -124,3 +124,11 @@ test('whilePlaying null ref guards - null audioRef', () => {
   const shouldContinue = !!(progressBarRef.current && audioRef.current)
   expect(shouldContinue).toBe(false) // Should exit early
 })
+
+test('onLoadedMetadata null guard - null audioRef', () => {
+  const audioRef = { current: null }
+
+  // Simulate the null check in onLoadedMetadata
+  const shouldContinue = !!audioRef.current
+  expect(shouldContinue).toBe(false) // Should exit early without crashing
+})

@@ -30,6 +30,8 @@ export const useAudioPlayer = (
   }, [duration])
 
   const onLoadedMetadata = () => {
+    if (!audioRef.current) return
+
     const seconds = Math.floor(audioRef.current.duration)
     setDuration(seconds)
 

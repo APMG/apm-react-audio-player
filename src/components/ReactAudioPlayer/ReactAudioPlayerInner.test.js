@@ -392,4 +392,39 @@ describe('ReactAudioPlayerInner rendering', () => {
     expect(timeline).toBeNull()
     expect(backwardControls.length).toBe(0)
   })
+
+  test('audio reload with array audioSrc - same values different reference', () => {
+    const mockLoad = jest.fn()
+    const audioRef = { current: { load: mockLoad } }
+    const progressRef = { current: null }
+
+    const props = {
+      audioSrc: ['https://example.com/stream.m3u8'],
+      audioPlayerRef: audioRef,
+      progressBarRef: progressRef,
+      isPlaying: false,
+      isMuted: false,
+      currentTime: 0,
+      duration: 100,
+      onLoadedMetadata: jest.fn(),
+      calculateTime: jest.fn(() => '00:00'),
+      togglePlaying: jest.fn(),
+      changePlayerCurrentTime: jest.fn(),
+      volumeControl: jest.fn(),
+      toggleMute: jest.fn(),
+      formatCalculateTime: jest.fn(),
+      rewindControl: jest.fn(),
+      forwardControl: jest.fn()
+    }
+
+    // Initial render
+    const { rerender } = render(<ReactAudioPlayerInner {...props} />)
+    const initialLoadCount = mockLoad.mock.calls.length
+
+    // Rerender with new array reference but same values
+    rerender(<ReactAudioPlayerInner {...props} audioSrc={['https://example.com/stream.m3u8']} />)
+
+    // Should NOT reload because the values are the same
+    expect(mockLoad.mock.calls.length).toBe(initialLoadCount)
+  })
 })

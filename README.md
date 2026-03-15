@@ -196,7 +196,7 @@ The audio player now supports HLS (HTTP Live Streaming) for both live streams an
 
 | Browser | HLS Support | Fallback Behavior |
 |---------|------------|-------------------|
-| Safari (all versions) | Native ✓ | N/A |
+| Safari 11+ | Native ✓ | N/A |
 | iOS Safari | Native ✓ | N/A |
 | Chrome 142+ | Native ✓ | N/A |
 | Edge 142+ | Native ✓ | N/A |
@@ -204,6 +204,7 @@ The audio player now supports HLS (HTTP Live Streaming) for both live streams an
 | Chrome <142 | None | Automatically uses AAC/MP3 |
 | Firefox | None | Automatically uses AAC/MP3 |
 | Edge <142 | None | Automatically uses AAC/MP3 |
+| Safari <11 | None | Automatically uses AAC/MP3 |
 
 **Note:** Chrome and Edge added native HLS support in version 142 (December 2024). Older versions will automatically skip HLS sources and use alternative formats.
 

@@ -25,6 +25,7 @@ var useAudioPlayer = (audioRef, progressBarRef, volumeCtrl, initialDuration = vo
     }
   }, [duration]);
   const onLoadedMetadata = () => {
+    if (!audioRef.current) return;
     const seconds = Math.floor(audioRef.current.duration);
     setDuration(seconds);
     if (audioRef.current.duration !== Infinity && progressBarRef.current) {
@@ -253,7 +254,7 @@ var ReactAudioPlayerInner = (props) => {
         console.warn("Failed to reload audio source:", err);
       }
     }
-  }, [audioSrc]);
+  }, [JSON.stringify(audioSrc)]);
   useEffect2(() => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.volume = 1;

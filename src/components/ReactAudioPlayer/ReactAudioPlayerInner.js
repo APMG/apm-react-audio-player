@@ -58,6 +58,7 @@ const ReactAudioPlayerInner = (props) => {
     formatCalculateTime(audioDuration)
 
   // Reload audio when audioSrc changes
+  // Use JSON.stringify to handle array comparisons by value instead of reference
   useEffect(() => {
     if (audioPlayerRef.current && audioSrc) {
       try {
@@ -66,7 +67,7 @@ const ReactAudioPlayerInner = (props) => {
         console.warn('Failed to reload audio source:', err)
       }
     }
-  }, [audioSrc])
+  }, [JSON.stringify(audioSrc)])
 
   // Set initial volume to 100%
   useEffect(() => {
