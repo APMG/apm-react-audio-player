@@ -1,6 +1,24 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
+
+const getTypeFromExtension = (url) => {
+  const extension = url.split('.').pop().split('?')[0]
+  switch (extension) {
+    case 'm3u8':
+      return 'application/x-mpegURL'
+    case 'aac':
+      return 'audio/aac'
+    case 'mp3':
+      return 'audio/mpeg'
+    case 'ogg':
+      return 'audio/ogg'
+    case 'wav':
+      return 'audio/wav'
+    default:
+      return undefined // Let browser auto-detect
+  }
+}
 
 const ReactAudioPlayerInner = (props) => {
   // references
@@ -14,7 +32,6 @@ const ReactAudioPlayerInner = (props) => {
     volumeCtrl,
     playBtnClass,
     customHtml,
-    isLive,
     onLoadedMetadata,
     calculateTime,
     togglePlaying,
@@ -40,6 +57,32 @@ const ReactAudioPlayerInner = (props) => {
     audioDuration &&
     formatCalculateTime(audioDuration)
 
+  // Reload audio when audioSrc changes
+  // Use JSON.stringify to handle array comparisons by value instead of reference
+  useEffect(() => {
+    if (audioPlayerRef.current && audioSrc) {
+      try {
+        audioPlayerRef.current.load()
+      } catch (err) {
+        console.warn('Failed to reload audio source:', err)
+      }
+    }
+  }, [JSON.stringify(audioSrc)])
+
+  // Set initial volume to 100%
+  useEffect(() => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.volume = 1.0
+    }
+  }, [])
+
+  // Helper to determine if controls should show
+  const showControls =
+    duration !== Infinity &&
+    duration !== undefined &&
+    !isNaN(duration) &&
+    isFinite(duration)
+
   return (
     audioSrc && (
       <div
@@ -48,11 +91,23 @@ const ReactAudioPlayerInner = (props) => {
       >
         <audio
           ref={audioPlayerRef}
-          src={audioSrc}
           preload='none'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
-        />
+        >
+          {Array.isArray(audioSrc) ? (
+            audioSrc.map((src, index) => (
+              <source
+                key={index}
+                src={src}
+                type={getTypeFromExtension(src)}
+              />
+            ))
+          ) : audioSrc ? (
+            <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />
+          ) : null}
+          Your browser does not support the audio element.
+        </audio>
         <div className='player-layout'>
           {volumeCtrl && (
             <div className='player-controls-secondary-outer'>
@@ -80,6 +135,7 @@ const ReactAudioPlayerInner = (props) => {
                     className='player-volume-progress'
                     min={0}
                     max={100}
+                    defaultValue={100}
                     aria-hidden='true'
                     aria-valuetext='100%'
                     onChange={(e) => volumeControl(e)}
@@ -93,7 +149,7 @@ const ReactAudioPlayerInner = (props) => {
             </div>
           )}
           <div className='player-controls'>
-            {!isLive && (
+            {showControls && (
               <div className='player-backward-forward-controls'>
                 <button onClick={rewindControl}>
                   <img
@@ -117,7 +173,7 @@ const ReactAudioPlayerInner = (props) => {
                 {isPlaying ? <Pause /> : <Play />}
               </button>
             </div>
-            {!isLive && (
+            {showControls && (
               <div className='player-backward-forward-controls'>
                 <button onClick={forwardControl}>
                   <img
@@ -128,7 +184,7 @@ const ReactAudioPlayerInner = (props) => {
               </div>
             )}
           </div>
-          {!isLive && (
+          {showControls && (
             <div className='player-timeline'>
               <div className='player-currentTime'>
                 {calculateTime(currentTime)}
@@ -157,7 +213,7 @@ const ReactAudioPlayerInner = (props) => {
           <div className='player-content'>
             {customHtml && customHtml}
             <div className='player-audio-type type-sm'>
-              {isLive ? (
+              {duration === Infinity ? (
                 <div className='player-live-label'>
                   {prefix ? prefix : 'On Air'}
                 </div>
