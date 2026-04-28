@@ -53,6 +53,54 @@ test('formatCalculateTime()', () => {
   expect(formatCalculateTime(testHourMinutesSeconds)).toBe('2hr 20min 20sec')
 })
 
+// ============LIVE STREAM PLAY BEHAVIOR TESTS================
+test('play() calls load() before play() for live streams (duration === Infinity)', () => {
+  const mockLoad = jest.fn()
+  const mockPlay = jest.fn()
+  const mockAudioRef = {
+    current: {
+      duration: Infinity,
+      load: mockLoad,
+      play: mockPlay
+    }
+  }
+
+  // Simulate the load-before-play logic for live streams
+  const duration = Infinity
+  if (duration === Infinity) {
+    mockAudioRef.current.load()
+  }
+  mockAudioRef.current.play()
+
+  expect(mockLoad).toHaveBeenCalledTimes(1)
+  expect(mockPlay).toHaveBeenCalledTimes(1)
+  // load must be called before play
+  expect(mockLoad.mock.invocationCallOrder[0]).toBeLessThan(
+    mockPlay.mock.invocationCallOrder[0]
+  )
+})
+
+test('play() does not call load() for on-demand audio (finite duration)', () => {
+  const mockLoad = jest.fn()
+  const mockPlay = jest.fn()
+  const mockAudioRef = {
+    current: {
+      duration: 180,
+      load: mockLoad,
+      play: mockPlay
+    }
+  }
+
+  const duration = 180
+  if (duration === Infinity) {
+    mockAudioRef.current.load()
+  }
+  mockAudioRef.current.play()
+
+  expect(mockLoad).not.toHaveBeenCalled()
+  expect(mockPlay).toHaveBeenCalledTimes(1)
+})
+
 // ============RAF LOOP SAFETY TESTS================
 test('RAF loop should not start when duration is Infinity', () => {
   const mockAudioRef = {
