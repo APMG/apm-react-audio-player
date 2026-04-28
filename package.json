@@ -27,9 +27,6 @@
     "prettier:fix": "prettier --check '**/**.js' --write",
     "clean": "rm -rf node_modules dist package-lock.json yarn.lock"
   },
-  "assert": {
-    "type": "json"
-  },
   "peerDependencies": {
     "react": "^16.0.0"
   },
@@ -85,6 +82,8 @@
   ],
   "jest": {
     "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ]
   }
 }

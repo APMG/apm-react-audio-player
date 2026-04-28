@@ -1,6 +1,6 @@
 import babel from 'rollup-plugin-babel'
 import json from 'rollup-plugin-json'
-import pkg from './package.json' assert { type: 'json' }
+import pkg from './package.json' with { type: 'json' }
 
 const deps = Object.keys(pkg.dependencies || {})
 const peerDeps = Object.keys(pkg.peerDependencies || {})
