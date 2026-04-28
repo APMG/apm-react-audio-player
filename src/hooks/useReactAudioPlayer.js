@@ -86,6 +86,18 @@ export const useAudioPlayer = (
   const play = () => {
     setIsPlaying(true)
     setIsFinishedPlaying(false)
+
+    // For live streams (duration === Infinity), reset the audio element before
+    // playing. The audioSrc useEffect in ReactAudioPlayerInner calls load() on
+    // mount, which causes the browser to pre-buffer the HLS stream. By the time
+    // the user clicks play the manifest's seekable window has moved forward and
+    // old segments are gone, so the browser auto-seeks to the earliest available
+    // position (e.g. 20s in), causing ads to start mid-stream. Calling load()
+    // here reconnects to the current live edge and gets a fresh manifest.
+    if (duration === Infinity) {
+      audioRef.current.load()
+    }
+
     audioRef.current.play()
 
     // Only start RAF loop for non-live streams with valid duration
