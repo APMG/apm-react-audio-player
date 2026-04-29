@@ -23,9 +23,19 @@ export const useAudioPlayer = (
   }, [currentTime])
 
   useEffect(() => {
-    // Cancel RAF loop if duration changes to Infinity (live stream metadata loaded)
-    if (duration === Infinity && animationRef.current) {
+    if (duration === Infinity) {
+      // Cancel RAF loop for live streams
+      if (animationRef.current) window.cancelAnimationFrame(animationRef.current)
+    } else if (
+      duration &&
+      !isNaN(duration) &&
+      progressBarRef.current &&
+      audioRef.current &&
+      !audioRef.current.paused
+    ) {
+      // play() was called before metadata loaded — progressBarRef is now mounted, start loop
       window.cancelAnimationFrame(animationRef.current)
+      animationRef.current = window.requestAnimationFrame(whilePlaying)
     }
   }, [duration])
 
