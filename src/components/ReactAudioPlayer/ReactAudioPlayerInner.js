@@ -33,6 +33,7 @@ const ReactAudioPlayerInner = (props) => {
     playBtnClass,
     customHtml,
     onLoadedMetadata,
+    resetDuration,
     calculateTime,
     togglePlaying,
     changePlayerCurrentTime,
@@ -61,6 +62,7 @@ const ReactAudioPlayerInner = (props) => {
   // Use JSON.stringify to handle array comparisons by value instead of reference
   useEffect(() => {
     if (audioPlayerRef.current && audioSrc) {
+      resetDuration?.()
       try {
         audioPlayerRef.current.load()
       } catch (err) {
