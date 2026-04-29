@@ -40,6 +40,14 @@ export const useAudioPlayer = (
     }
   }
 
+  const resetDuration = () => {
+    setDuration(undefined)
+    setCurrentTime(0)
+    if (progressBarRef.current) {
+      progressBarRef.current.value = 0
+    }
+  }
+
   const updateCurrentTime = () => {
     if (progressBarRef.current) {
       setCurrentTime(progressBarRef.current.value)
@@ -52,11 +60,12 @@ export const useAudioPlayer = (
       return
     }
 
-    if (audioRef.current.duration !== Infinity) {
+    const liveDuration = audioRef.current.duration
+    if (liveDuration !== Infinity) {
       progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
       progressBarRef.current.style.setProperty(
         '--seek-before-width',
-        `${(progressBarRef.current.value / duration) * 100}%`
+        liveDuration > 0 ? `${(progressBarRef.current.value / liveDuration) * 100}%` : '0%'
       )
     }
 
@@ -133,9 +142,10 @@ export const useAudioPlayer = (
     audioRef.current.currentTime = progressBarRef.current.value
     setCurrentTime(progressBarRef.current.value)
 
+    const liveDuration = audioRef.current.duration
     progressBarRef.current.style.setProperty(
       '--seek-before-width',
-      `${(progressBarRef.current.value / duration) * 100}%`
+      liveDuration > 0 ? `${(progressBarRef.current.value / liveDuration) * 100}%` : '0%'
     )
   }
 
@@ -184,6 +194,7 @@ export const useAudioPlayer = (
 
   return {
     onLoadedMetadata,
+    resetDuration,
     calculateTime,
     togglePlaying,
     changePlayerCurrentTime,
