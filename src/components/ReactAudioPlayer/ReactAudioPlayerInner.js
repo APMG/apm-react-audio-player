@@ -24,6 +24,7 @@ const ReactAudioPlayerInner = (props) => {
   // references
   const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
   const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
+  const hasInitializedRef = useRef(false)
 
   const customStyles = props ? props.style : ''
   const {
@@ -58,16 +59,23 @@ const ReactAudioPlayerInner = (props) => {
     audioDuration &&
     formatCalculateTime(audioDuration)
 
-  // Reload audio when audioSrc changes
-  // Use JSON.stringify to handle array comparisons by value instead of reference
+  // Reload audio when audioSrc changes.
+  // Skip load() on initial mount — calling it pre-buffers live streams so that
+  // by the time the user clicks play the seekable window has advanced and
+  // segments are stale. On first play the browser fetches the live edge
+  // naturally. On subsequent src changes we do call load() to reset the element.
+  // Use JSON.stringify to handle array comparisons by value instead of reference.
   useEffect(() => {
     if (audioPlayerRef.current && audioSrc) {
-      resetDuration?.()
-      try {
-        audioPlayerRef.current.load()
-      } catch (err) {
-        console.warn('Failed to reload audio source:', err)
+      if (hasInitializedRef.current) {
+        resetDuration?.()
+        try {
+          audioPlayerRef.current.load()
+        } catch (err) {
+          console.warn('Failed to reload audio source:', err)
+        }
       }
+      hasInitializedRef.current = true
     }
   }, [JSON.stringify(audioSrc)])
 
