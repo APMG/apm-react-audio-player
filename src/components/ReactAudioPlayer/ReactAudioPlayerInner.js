@@ -8,6 +8,12 @@ const getHlsSrc = (audioSrc) => {
   return urls.find((url) => url && url.split('?')[0].endsWith('.m3u8')) ?? null
 }
 
+const getNonHlsSrc = (audioSrc) => {
+  if (!Array.isArray(audioSrc)) return audioSrc || undefined
+  const nonHls = audioSrc.find((url) => url && !url.split('?')[0].endsWith('.m3u8'))
+  return nonHls ?? audioSrc[0] ?? undefined
+}
+
 const getTypeFromExtension = (url) => {
   const extension = url.split('.').pop().split('?')[0]
   switch (extension) {
@@ -146,13 +152,7 @@ const ReactAudioPlayerInner = (props) => {
           preload='none'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
-          src={
-            isHlsManaged
-              ? undefined
-              : Array.isArray(audioSrc)
-                ? audioSrc[0]
-                : audioSrc || undefined
-          }
+          src={isHlsManaged ? undefined : getNonHlsSrc(audioSrc)}
         />
         <div className='player-layout'>
           {volumeCtrl && (
