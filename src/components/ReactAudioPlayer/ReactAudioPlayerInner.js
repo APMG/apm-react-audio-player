@@ -107,11 +107,7 @@ const ReactAudioPlayerInner = (props) => {
         >
           {Array.isArray(audioSrc) ? (
             audioSrc.map((src, index) => (
-              <source
-                key={index}
-                src={src}
-                type={getTypeFromExtension(src)}
-              />
+              <source key={index} src={src} type={getTypeFromExtension(src)} />
             ))
           ) : audioSrc ? (
             <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />

@@ -214,7 +214,9 @@ describe('ReactAudioPlayerInner rendering', () => {
     const { container } = render(<ReactAudioPlayerInner {...props} />)
     const sources = container.querySelectorAll('source')
     expect(sources.length).toBe(3)
-    expect(sources[0].getAttribute('src')).toBe('https://example.com/stream.m3u8')
+    expect(sources[0].getAttribute('src')).toBe(
+      'https://example.com/stream.m3u8'
+    )
     expect(sources[0].getAttribute('type')).toBe('application/x-mpegURL')
     expect(sources[1].getAttribute('src')).toBe('https://example.com/audio.aac')
     expect(sources[1].getAttribute('type')).toBe('audio/aac')
@@ -249,7 +251,9 @@ describe('ReactAudioPlayerInner rendering', () => {
     const { container } = render(<ReactAudioPlayerInner {...props} />)
     const sources = container.querySelectorAll('source')
     expect(sources[0].getAttribute('src')).toBe('https://example.com/first.mp3')
-    expect(sources[1].getAttribute('src')).toBe('https://example.com/second.aac')
+    expect(sources[1].getAttribute('src')).toBe(
+      'https://example.com/second.aac'
+    )
     expect(sources[2].getAttribute('src')).toBe('https://example.com/third.ogg')
   })
 
@@ -275,7 +279,9 @@ describe('ReactAudioPlayerInner rendering', () => {
 
     const { container } = render(<ReactAudioPlayerInner {...props} />)
     const timeline = container.querySelector('.player-timeline')
-    const backwardControls = container.querySelectorAll('.player-backward-forward-controls')
+    const backwardControls = container.querySelectorAll(
+      '.player-backward-forward-controls'
+    )
 
     expect(timeline).toBeNull()
     expect(backwardControls.length).toBe(0)
@@ -303,7 +309,9 @@ describe('ReactAudioPlayerInner rendering', () => {
 
     const { container } = render(<ReactAudioPlayerInner {...props} />)
     const timeline = container.querySelector('.player-timeline')
-    const backwardControls = container.querySelectorAll('.player-backward-forward-controls')
+    const backwardControls = container.querySelectorAll(
+      '.player-backward-forward-controls'
+    )
 
     expect(timeline).not.toBeNull()
     expect(backwardControls.length).toBe(2)
@@ -359,7 +367,9 @@ describe('ReactAudioPlayerInner rendering', () => {
 
     const { container } = render(<ReactAudioPlayerInner {...props} />)
     const timeline = container.querySelector('.player-timeline')
-    const backwardControls = container.querySelectorAll('.player-backward-forward-controls')
+    const backwardControls = container.querySelectorAll(
+      '.player-backward-forward-controls'
+    )
 
     expect(timeline).toBeNull()
     expect(backwardControls.length).toBe(0)
@@ -387,7 +397,9 @@ describe('ReactAudioPlayerInner rendering', () => {
 
     const { container } = render(<ReactAudioPlayerInner {...props} />)
     const timeline = container.querySelector('.player-timeline')
-    const backwardControls = container.querySelectorAll('.player-backward-forward-controls')
+    const backwardControls = container.querySelectorAll(
+      '.player-backward-forward-controls'
+    )
 
     expect(timeline).toBeNull()
     expect(backwardControls.length).toBe(0)
@@ -422,7 +434,12 @@ describe('ReactAudioPlayerInner rendering', () => {
     const initialLoadCount = mockLoad.mock.calls.length
 
     // Rerender with new array reference but same values
-    rerender(<ReactAudioPlayerInner {...props} audioSrc={['https://example.com/stream.m3u8']} />)
+    rerender(
+      <ReactAudioPlayerInner
+        {...props}
+        audioSrc={['https://example.com/stream.m3u8']}
+      />
+    )
 
     // Should NOT reload because the values are the same
     expect(mockLoad.mock.calls.length).toBe(initialLoadCount)

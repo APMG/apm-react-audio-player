@@ -12,8 +12,7 @@ export const useAudioPlayer = (
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef() // reference the animation
   const [isMuted, setIsMuted] = useState(false)
-  const isStream =
-    audioRef.current && audioRef.current.duration === Infinity
+  const isStream = audioRef.current && audioRef.current.duration === Infinity
 
   useEffect(() => {
     if (currentTime === Number(duration)) {
@@ -25,7 +24,8 @@ export const useAudioPlayer = (
   useEffect(() => {
     if (duration === Infinity) {
       // Cancel RAF loop for live streams
-      if (animationRef.current) window.cancelAnimationFrame(animationRef.current)
+      if (animationRef.current)
+        window.cancelAnimationFrame(animationRef.current)
     } else if (
       duration &&
       !isNaN(duration) &&
@@ -75,7 +75,9 @@ export const useAudioPlayer = (
       progressBarRef.current.value = Math.floor(audioRef.current.currentTime)
       progressBarRef.current.style.setProperty(
         '--seek-before-width',
-        liveDuration > 0 ? `${(progressBarRef.current.value / liveDuration) * 100}%` : '0%'
+        liveDuration > 0
+          ? `${(progressBarRef.current.value / liveDuration) * 100}%`
+          : '0%'
       )
     }
 
@@ -155,7 +157,9 @@ export const useAudioPlayer = (
     const liveDuration = audioRef.current.duration
     progressBarRef.current.style.setProperty(
       '--seek-before-width',
-      liveDuration > 0 ? `${(progressBarRef.current.value / liveDuration) * 100}%` : '0%'
+      liveDuration > 0
+        ? `${(progressBarRef.current.value / liveDuration) * 100}%`
+        : '0%'
     )
   }
 
