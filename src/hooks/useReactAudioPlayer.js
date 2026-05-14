@@ -114,8 +114,20 @@ export const useAudioPlayer = (
 
     if (isLiveOrUnloaded) {
       if (hlsRef?.current) {
-        // hls.js owns the buffer and holds us at the live edge — play directly
-        audioRef.current.play()
+        const audio = audioRef.current
+        const hls = hlsRef.current
+        // If data is already buffered (e.g. resuming after pause), play immediately.
+        // Otherwise wait for the first fragment so Safari's audio decoder is warm
+        // before output starts, preventing the first syllable from being cut.
+        if (audio.buffered.length > 0) {
+          audio.play()
+        } else {
+          const onFragBuffered = () => {
+            hls.off('hlsFragBuffered', onFragBuffered)
+            audio.play()
+          }
+          hls.on('hlsFragBuffered', onFragBuffered)
+        }
       } else {
         // Native HLS (Safari) fallback: force a fresh manifest fetch so we don't
         // play from a pre-buffered stale position across an EXT-X-DISCONTINUITY.
