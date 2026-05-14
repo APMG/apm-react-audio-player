@@ -1,6 +1,12 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
+import Hls from 'hls.js'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
+
+const getHlsSrc = (audioSrc) => {
+  const urls = Array.isArray(audioSrc) ? audioSrc : [audioSrc]
+  return urls.find((url) => url && url.split('?')[0].endsWith('.m3u8')) ?? null
+}
 
 const getTypeFromExtension = (url) => {
   const extension = url.split('.').pop().split('?')[0]
@@ -24,7 +30,9 @@ const ReactAudioPlayerInner = (props) => {
   // references
   const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
   const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
+  const hlsRef = props.hlsRef ?? useRef(null)
   const hasInitializedRef = useRef(false)
+  const [isHlsManaged, setIsHlsManaged] = useState(false)
 
   const customStyles = props ? props.style : ''
   const {
@@ -59,23 +67,52 @@ const ReactAudioPlayerInner = (props) => {
     audioDuration &&
     formatCalculateTime(audioDuration)
 
-  // Reload audio when audioSrc changes.
-  // Skip load() on initial mount — calling it pre-buffers live streams so that
-  // by the time the user clicks play the seekable window has advanced and
-  // segments are stale. On first play the browser fetches the live edge
-  // naturally. On subsequent src changes we do call load() to reset the element.
-  // Use JSON.stringify to handle array comparisons by value instead of reference.
+  // Manage audio source changes. For HLS sources hls.js owns the loading cycle;
+  // for everything else we fall back to the native load() path.
+  // JSON.stringify handles array-valued audioSrc comparisons by value.
   useEffect(() => {
-    if (audioPlayerRef.current && audioSrc) {
+    if (!audioPlayerRef.current || !audioSrc) return
+
+    if (hasInitializedRef.current) {
+      resetDuration?.()
+    }
+
+    // Tear down any existing hls.js instance before re-evaluating the source.
+    if (hlsRef.current) {
+      hlsRef.current.destroy()
+      hlsRef.current = null
+    }
+
+    const hlsSrc = getHlsSrc(audioSrc)
+
+    if (hlsSrc && Hls.isSupported()) {
+      const hls = new Hls({
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 5,
+        enableWorker: true,
+      })
+      hls.loadSource(hlsSrc)
+      hls.attachMedia(audioPlayerRef.current)
+      hlsRef.current = hls
+      setIsHlsManaged(true)
+    } else {
+      setIsHlsManaged(false)
       if (hasInitializedRef.current) {
-        resetDuration?.()
         try {
           audioPlayerRef.current.load()
         } catch (err) {
           console.warn('Failed to reload audio source:', err)
         }
       }
-      hasInitializedRef.current = true
+    }
+
+    hasInitializedRef.current = true
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
     }
   }, [JSON.stringify(audioSrc)])
 
@@ -105,13 +142,18 @@ const ReactAudioPlayerInner = (props) => {
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
         >
-          {Array.isArray(audioSrc) ? (
-            audioSrc.map((src, index) => (
-              <source key={index} src={src} type={getTypeFromExtension(src)} />
-            ))
-          ) : audioSrc ? (
-            <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />
-          ) : null}
+          {!isHlsManaged &&
+            (Array.isArray(audioSrc) ? (
+              audioSrc.map((src, index) => (
+                <source
+                  key={index}
+                  src={src}
+                  type={getTypeFromExtension(src)}
+                />
+              ))
+            ) : audioSrc ? (
+              <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />
+            ) : null)}
           Your browser does not support the audio element.
         </audio>
         <div className='player-layout'>

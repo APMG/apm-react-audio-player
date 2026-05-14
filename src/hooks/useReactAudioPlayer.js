@@ -4,7 +4,8 @@ export const useAudioPlayer = (
   audioRef,
   progressBarRef,
   volumeCtrl,
-  initialDuration = undefined
+  initialDuration = undefined,
+  hlsRef = null
 ) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(initialDuration)
@@ -112,18 +113,21 @@ export const useAudioPlayer = (
     const isLiveOrUnloaded = elDuration === Infinity || isNaN(elDuration)
 
     if (isLiveOrUnloaded) {
-      // Fresh play on a live stream: reconnect to the live edge and wait for
-      // canplay before starting so the browser doesn't play from a pre-buffered
-      // position and clip the beginning of preroll audio.
-      audioRef.current.addEventListener(
-        'canplay',
-        () => {
-          audioRef.current.play()
-        },
-        { once: true }
-      )
-      // load is what triggers the canplay event
-      audioRef.current.load()
+      if (hlsRef?.current) {
+        // hls.js owns the buffer and holds us at the live edge — play directly
+        audioRef.current.play()
+      } else {
+        // Native HLS (Safari) fallback: force a fresh manifest fetch so we don't
+        // play from a pre-buffered stale position across an EXT-X-DISCONTINUITY.
+        audioRef.current.addEventListener(
+          'canplay',
+          () => {
+            audioRef.current.play()
+          },
+          { once: true }
+        )
+        audioRef.current.load()
+      }
     } else {
       audioRef.current.play()
 

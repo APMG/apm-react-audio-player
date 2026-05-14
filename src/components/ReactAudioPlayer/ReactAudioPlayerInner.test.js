@@ -1,6 +1,18 @@
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import ReactAudioPlayerInner from './ReactAudioPlayerInner'
+
+jest.mock('hls.js', () => {
+  const mockHlsInstance = {
+    loadSource: jest.fn(),
+    attachMedia: jest.fn(),
+    destroy: jest.fn(),
+  }
+  const MockHls = jest.fn(() => mockHlsInstance)
+  MockHls.isSupported = jest.fn(() => false)
+  MockHls._mockInstance = mockHlsInstance
+  return MockHls
+})
 
 // Helper function tests
 describe('getTypeFromExtension', () => {
@@ -405,6 +417,33 @@ describe('ReactAudioPlayerInner rendering', () => {
     expect(backwardControls.length).toBe(0)
   })
 
+  test('falls back to native source tags when Hls.isSupported() is false', () => {
+    const props = {
+      audioSrc: 'https://example.com/stream.m3u8',
+      audioPlayerRef: { current: null },
+      progressBarRef: { current: null },
+      isPlaying: false,
+      isMuted: false,
+      currentTime: 0,
+      duration: Infinity,
+      onLoadedMetadata: jest.fn(),
+      calculateTime: jest.fn(() => '00:00'),
+      togglePlaying: jest.fn(),
+      changePlayerCurrentTime: jest.fn(),
+      volumeControl: jest.fn(),
+      toggleMute: jest.fn(),
+      formatCalculateTime: jest.fn(),
+      rewindControl: jest.fn(),
+      forwardControl: jest.fn()
+    }
+
+    const { container } = render(<ReactAudioPlayerInner {...props} />)
+    // isSupported() is false in jsdom, so native <source> tag should render
+    const source = container.querySelector('source')
+    expect(source).not.toBeNull()
+    expect(source.getAttribute('type')).toBe('application/x-mpegURL')
+  })
+
   test('audio reload with array audioSrc - same values different reference', () => {
     const mockLoad = jest.fn()
     const audioRef = { current: { load: mockLoad } }
@@ -443,5 +482,112 @@ describe('ReactAudioPlayerInner rendering', () => {
 
     // Should NOT reload because the values are the same
     expect(mockLoad.mock.calls.length).toBe(initialLoadCount)
+  })
+})
+
+describe('hls.js integration', () => {
+  let Hls
+
+  beforeEach(() => {
+    Hls = require('hls.js')
+    Hls.isSupported.mockReturnValue(true)
+    Hls._mockInstance.loadSource.mockClear()
+    Hls._mockInstance.attachMedia.mockClear()
+    Hls._mockInstance.destroy.mockClear()
+    Hls.mockClear()
+  })
+
+  afterEach(() => {
+    Hls.isSupported.mockReturnValue(false)
+  })
+
+  const makeProps = (audioSrc) => ({
+    audioSrc,
+    audioPlayerRef: { current: document.createElement('audio') },
+    progressBarRef: { current: null },
+    isPlaying: false,
+    isMuted: false,
+    currentTime: 0,
+    duration: Infinity,
+    onLoadedMetadata: jest.fn(),
+    calculateTime: jest.fn(() => '00:00'),
+    togglePlaying: jest.fn(),
+    changePlayerCurrentTime: jest.fn(),
+    volumeControl: jest.fn(),
+    toggleMute: jest.fn(),
+    formatCalculateTime: jest.fn(),
+    rewindControl: jest.fn(),
+    forwardControl: jest.fn()
+  })
+
+  test('initializes hls.js and loads source for .m3u8 string src', () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    act(() => { render(<ReactAudioPlayerInner {...props} />) })
+
+    expect(Hls).toHaveBeenCalledTimes(1)
+    expect(Hls._mockInstance.loadSource).toHaveBeenCalledWith(
+      'https://example.com/stream.m3u8'
+    )
+    expect(Hls._mockInstance.attachMedia).toHaveBeenCalledWith(
+      props.audioPlayerRef.current
+    )
+  })
+
+  test('picks the .m3u8 URL from an array and initializes hls.js', () => {
+    const props = makeProps([
+      'https://example.com/stream.m3u8',
+      'https://example.com/fallback.aac'
+    ])
+    act(() => { render(<ReactAudioPlayerInner {...props} />) })
+
+    expect(Hls._mockInstance.loadSource).toHaveBeenCalledWith(
+      'https://example.com/stream.m3u8'
+    )
+  })
+
+  test('suppresses <source> tags when hls.js is active', async () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    let container
+    await act(async () => {
+      ;({ container } = render(<ReactAudioPlayerInner {...props} />))
+    })
+    // hls.js owns the source — no <source> tag should be in the DOM
+    expect(container.querySelector('source')).toBeNull()
+  })
+
+  test('destroys hls.js instance when component unmounts', () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    let unmount
+    act(() => { ;({ unmount } = render(<ReactAudioPlayerInner {...props} />)) })
+    act(() => { unmount() })
+
+    expect(Hls._mockInstance.destroy).toHaveBeenCalled()
+  })
+
+  test('destroys and recreates hls.js instance when audioSrc changes', () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    let rerender
+    act(() => { ;({ rerender } = render(<ReactAudioPlayerInner {...props} />)) })
+
+    act(() => {
+      rerender(
+        <ReactAudioPlayerInner
+          {...props}
+          audioSrc='https://example.com/other-stream.m3u8'
+        />
+      )
+    })
+
+    expect(Hls._mockInstance.destroy).toHaveBeenCalled()
+    expect(Hls._mockInstance.loadSource).toHaveBeenLastCalledWith(
+      'https://example.com/other-stream.m3u8'
+    )
+  })
+
+  test('does not use hls.js for non-HLS sources', () => {
+    const props = makeProps('https://example.com/audio.mp3')
+    act(() => { render(<ReactAudioPlayerInner {...props} />) })
+
+    expect(Hls).not.toHaveBeenCalled()
   })
 })
