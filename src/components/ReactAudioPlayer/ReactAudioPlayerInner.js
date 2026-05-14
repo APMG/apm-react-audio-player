@@ -87,10 +87,16 @@ const ReactAudioPlayerInner = (props) => {
     const hlsSrc = getHlsSrc(audioSrc)
 
     if (hlsSrc && Hls.isSupported()) {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
       const hls = new Hls({
         liveSyncDurationCount: 3,
         liveMaxLatencyDurationCount: 5,
-        enableWorker: true,
+        enableWorker: !isSafari,
+        // Safari's MSE stalls at EXT-X-DISCONTINUITY boundaries without extra buffer tolerance.
+        ...(isSafari && {
+          maxBufferHole: 2,
+          maxSeekHole: 2,
+        }),
       })
       hls.loadSource(hlsSrc)
       hls.attachMedia(audioPlayerRef.current)
