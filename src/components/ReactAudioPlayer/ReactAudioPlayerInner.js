@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect } from 'react'
 import Hls from 'hls.js'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
@@ -32,7 +32,8 @@ const ReactAudioPlayerInner = (props) => {
   const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
   const hlsRef = props.hlsRef ?? useRef(null)
   const hasInitializedRef = useRef(false)
-  const [isHlsManaged, setIsHlsManaged] = useState(false)
+  const hlsSrcForRender = getHlsSrc(audioSrc)
+  const isHlsManaged = !!(hlsSrcForRender && Hls.isSupported())
 
   const customStyles = props ? props.style : ''
   const {
@@ -94,9 +95,7 @@ const ReactAudioPlayerInner = (props) => {
       hls.loadSource(hlsSrc)
       hls.attachMedia(audioPlayerRef.current)
       hlsRef.current = hls
-      setIsHlsManaged(true)
     } else {
-      setIsHlsManaged(false)
       if (hasInitializedRef.current) {
         try {
           audioPlayerRef.current.load()
@@ -141,21 +140,14 @@ const ReactAudioPlayerInner = (props) => {
           preload='none'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
-        >
-          {!isHlsManaged &&
-            (Array.isArray(audioSrc) ? (
-              audioSrc.map((src, index) => (
-                <source
-                  key={index}
-                  src={src}
-                  type={getTypeFromExtension(src)}
-                />
-              ))
-            ) : audioSrc ? (
-              <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />
-            ) : null)}
-          Your browser does not support the audio element.
-        </audio>
+          src={
+            isHlsManaged
+              ? undefined
+              : Array.isArray(audioSrc)
+                ? audioSrc[0]
+                : audioSrc || undefined
+          }
+        />
         <div className='player-layout'>
           {volumeCtrl && (
             <div className='player-controls-secondary-outer'>
