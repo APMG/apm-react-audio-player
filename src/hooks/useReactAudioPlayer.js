@@ -3,15 +3,14 @@ import { useState, useRef, useEffect } from 'react'
 export const useAudioPlayer = (
   audioRef,
   progressBarRef,
-  volumeCtrl,
-  initialDuration = undefined,
-  hlsRef = null
+  { volumeCtrl, initialDuration, hlsRef } = {}
 ) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(initialDuration)
   const [currentTime, setCurrentTime] = useState(0)
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
-  const animationRef = useRef() // reference the animation
+  const animationRef = useRef()
+  const pendingPlayAbortRef = useRef(null)
   const [isMuted, setIsMuted] = useState(false)
   const isStream = audioRef.current && audioRef.current.duration === Infinity
 
@@ -94,6 +93,10 @@ export const useAudioPlayer = (
   }
 
   const pause = () => {
+    if (pendingPlayAbortRef.current) {
+      pendingPlayAbortRef.current()
+      pendingPlayAbortRef.current = null
+    }
     setIsPlaying(false)
     audioRef.current.pause()
     window.cancelAnimationFrame(animationRef.current)
@@ -104,6 +107,23 @@ export const useAudioPlayer = (
   //   updateCurrentTime()
   //   pause()
   // }
+
+  const safePlay = (audio) => {
+    const promise = audio.play()
+    if (promise !== undefined) {
+      promise.catch((err) => {
+        if (err.name === 'NotAllowedError') {
+          setIsPlaying(false)
+        } else if (err.name === 'AbortError') {
+          // play() was interrupted by a concurrent load() (e.g. ReactAudioPlayerInner
+          // calling load() after a source change) — retry once canplay fires.
+          // If the audio element was already unlocked by a prior play() call within
+          // a user gesture (e.g. the Safari fix in AudioContext), this retry succeeds.
+          audio.addEventListener('canplay', () => safePlay(audio), { once: true })
+        }
+      })
+    }
+  }
 
   const play = () => {
     setIsPlaying(true)
@@ -120,28 +140,37 @@ export const useAudioPlayer = (
         // Otherwise wait for the first fragment so Safari's audio decoder is warm
         // before output starts, preventing the first syllable from being cut.
         if (audio.buffered.length > 0) {
-          audio.play()
+          safePlay(audio)
         } else {
           const onFragBuffered = () => {
+            pendingPlayAbortRef.current = null
             hls.off('hlsFragBuffered', onFragBuffered)
-            audio.play()
+            safePlay(audio)
           }
+          pendingPlayAbortRef.current = () => hls.off('hlsFragBuffered', onFragBuffered)
           hls.on('hlsFragBuffered', onFragBuffered)
         }
-      } else {
-        // Native HLS (Safari) fallback: force a fresh manifest fetch so we don't
-        // play from a pre-buffered stale position across an EXT-X-DISCONTINUITY.
-        audioRef.current.addEventListener(
-          'canplay',
-          () => {
-            audioRef.current.play()
-          },
-          { once: true }
-        )
+      } else if (
+        elDuration === Infinity &&
+        audioRef.current.currentSrc?.split('?')[0].endsWith('.m3u8')
+      ) {
+        // Native live stream (no hls.js, e.g. iOS Safari): force a fresh manifest
+        // fetch so we don't play from a stale buffer position across a discontinuity.
+        const onCanPlay = () => {
+          pendingPlayAbortRef.current = null
+          if (audioRef.current) safePlay(audioRef.current)
+        }
+        pendingPlayAbortRef.current = () =>
+          audioRef.current?.removeEventListener('canplay', onCanPlay)
+        audioRef.current.addEventListener('canplay', onCanPlay, { once: true })
         audioRef.current.load()
+      } else {
+        // Finite audio not yet loaded (duration is NaN): call play() directly so
+        // Safari's user-gesture scope isn't lost waiting for an async canplay event.
+        safePlay(audioRef.current)
       }
     } else {
-      audioRef.current.play()
+      safePlay(audioRef.current)
 
       // Only start RAF loop for non-live streams with valid duration
       const dur = audioRef.current.duration

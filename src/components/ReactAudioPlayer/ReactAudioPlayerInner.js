@@ -33,13 +33,14 @@ const getTypeFromExtension = (url) => {
 }
 
 const ReactAudioPlayerInner = (props) => {
-  // references
-  const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
-  const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
-  const hlsRef = props.hlsRef ?? useRef(null)
+  // Always call hooks unconditionally — use internal refs when props don't provide them
+  const internalAudioRef = useRef()
+  const internalProgressBarRef = useRef()
+  const internalHlsRef = useRef(null)
   const hasInitializedRef = useRef(false)
-  const hlsSrcForRender = getHlsSrc(audioSrc)
-  const isHlsManaged = !!(hlsSrcForRender && Hls.isSupported())
+  // Track isPlaying via a ref so the source-change useEffect can read the
+  // current value without adding isPlaying to its dependency array.
+  const isPlayingRef = useRef(false)
 
   const customStyles = props ? props.style : ''
   const {
@@ -66,6 +67,15 @@ const ReactAudioPlayerInner = (props) => {
     prefix
   } = props
 
+  const audioPlayerRef = props.audioPlayerRef ?? internalAudioRef
+  const progressBarRef = props.progressBarRef ?? internalProgressBarRef
+  const hlsRef = props.hlsRef ?? internalHlsRef
+  const hlsSrcForRender = getHlsSrc(audioSrc)
+  const isHlsManaged = !!(hlsSrcForRender && Hls.isSupported())
+
+  // Keep isPlayingRef in sync on every render (runs before effects).
+  isPlayingRef.current = isPlaying
+
   const audioDuration = duration && !isNaN(duration) && calculateTime(duration)
 
   const formatDuration =
@@ -91,9 +101,9 @@ const ReactAudioPlayerInner = (props) => {
     }
 
     const hlsSrc = getHlsSrc(audioSrc)
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 
     if (hlsSrc && Hls.isSupported()) {
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
       const hls = new Hls({
         liveSyncDurationCount: 3,
         liveMaxLatencyDurationCount: 5,
@@ -108,7 +118,12 @@ const ReactAudioPlayerInner = (props) => {
       hls.attachMedia(audioPlayerRef.current)
       hlsRef.current = hls
     } else {
-      if (hasInitializedRef.current) {
+      // Non-HLS: call load() to prime the new source.
+      // Safari: skip load() when playing — the synchronous play() called in the
+      //   gesture handler would be aborted (AbortError), losing the user activation token.
+      // Chrome/Firefox: always call load(); AudioContext defers play() via pendingPlayRef
+      //   until after this effect, so load() and play() are sequenced with no concurrent abort.
+      if (hasInitializedRef.current && (!isSafari || !isPlayingRef.current)) {
         try {
           audioPlayerRef.current.load()
         } catch (err) {

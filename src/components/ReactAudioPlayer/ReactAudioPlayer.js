@@ -25,7 +25,7 @@ const ReactAudioPlayer = (props) => {
     formatCalculateTime,
     rewindControl,
     forwardControl
-  } = useAudioPlayer(audioPlayerRef, progressBarRef, undefined, undefined, hlsRef)
+  } = useAudioPlayer(audioPlayerRef, progressBarRef, { hlsRef })
 
   return (
     <ReactAudioPlayerInner
