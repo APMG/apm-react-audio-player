@@ -6,6 +6,7 @@ const ReactAudioPlayer = (props) => {
   // references
   const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
   const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
+  const hlsRef = useRef(null)
 
   const customStyles = props ? props.style : ''
 
@@ -24,13 +25,14 @@ const ReactAudioPlayer = (props) => {
     formatCalculateTime,
     rewindControl,
     forwardControl
-  } = useAudioPlayer(audioPlayerRef, progressBarRef)
+  } = useAudioPlayer(audioPlayerRef, progressBarRef, { hlsRef })
 
   return (
     <ReactAudioPlayerInner
       {...props}
       audioPlayerRef={audioPlayerRef}
       progressBarRef={progressBarRef}
+      hlsRef={hlsRef}
       isPlaying={isPlaying}
       isMuted={isMuted}
       currentTime={currentTime}

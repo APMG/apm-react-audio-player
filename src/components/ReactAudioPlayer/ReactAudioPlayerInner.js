@@ -1,6 +1,13 @@
 import React, { useRef, useEffect } from 'react'
+import Hls from 'hls.js'
 import Play from '../icons/Play/Play'
 import Pause from '../icons/Pause/Pause'
+
+const getHlsSrc = (audioSrc) => {
+  const urls = Array.isArray(audioSrc) ? audioSrc : [audioSrc]
+  return urls.find((url) => url && url.split('?')[0].endsWith('.m3u8')) ?? null
+}
+
 
 const getTypeFromExtension = (url) => {
   const extension = url.split('.').pop().split('?')[0]
@@ -21,10 +28,14 @@ const getTypeFromExtension = (url) => {
 }
 
 const ReactAudioPlayerInner = (props) => {
-  // references
-  const audioPlayerRef = props.audioPlayerRef ?? useRef() // reference our audio component
-  const progressBarRef = props.progressBarRef ?? useRef() // reference our progress bar
+  // Always call hooks unconditionally — use internal refs when props don't provide them
+  const internalAudioRef = useRef()
+  const internalProgressBarRef = useRef()
+  const internalHlsRef = useRef(null)
   const hasInitializedRef = useRef(false)
+  // Track isPlaying via a ref so the source-change useEffect can read the
+  // current value without adding isPlaying to its dependency array.
+  const isPlayingRef = useRef(false)
 
   const customStyles = props ? props.style : ''
   const {
@@ -51,6 +62,15 @@ const ReactAudioPlayerInner = (props) => {
     prefix
   } = props
 
+  const audioPlayerRef = props.audioPlayerRef ?? internalAudioRef
+  const progressBarRef = props.progressBarRef ?? internalProgressBarRef
+  const hlsRef = props.hlsRef ?? internalHlsRef
+  const hlsSrcForRender = getHlsSrc(audioSrc)
+  const isHlsManaged = !!(hlsSrcForRender && Hls.isSupported())
+
+  // Keep isPlayingRef in sync on every render (runs before effects).
+  isPlayingRef.current = isPlaying
+
   const audioDuration = duration && !isNaN(duration) && calculateTime(duration)
 
   const formatDuration =
@@ -59,23 +79,61 @@ const ReactAudioPlayerInner = (props) => {
     audioDuration &&
     formatCalculateTime(audioDuration)
 
-  // Reload audio when audioSrc changes.
-  // Skip load() on initial mount — calling it pre-buffers live streams so that
-  // by the time the user clicks play the seekable window has advanced and
-  // segments are stale. On first play the browser fetches the live edge
-  // naturally. On subsequent src changes we do call load() to reset the element.
-  // Use JSON.stringify to handle array comparisons by value instead of reference.
+  // Manage audio source changes. For HLS sources hls.js owns the loading cycle;
+  // for everything else we fall back to the native load() path.
+  // JSON.stringify handles array-valued audioSrc comparisons by value.
   useEffect(() => {
-    if (audioPlayerRef.current && audioSrc) {
-      if (hasInitializedRef.current) {
-        resetDuration?.()
+    if (!audioPlayerRef.current || !audioSrc) return
+
+    if (hasInitializedRef.current) {
+      resetDuration?.()
+    }
+
+    // Tear down any existing hls.js instance before re-evaluating the source.
+    if (hlsRef.current) {
+      hlsRef.current.destroy()
+      hlsRef.current = null
+    }
+
+    const hlsSrc = getHlsSrc(audioSrc)
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+
+    if (hlsSrc && Hls.isSupported()) {
+      const hls = new Hls({
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 5,
+        enableWorker: !isSafari,
+        // Safari's MSE stalls at EXT-X-DISCONTINUITY boundaries without extra buffer tolerance.
+        ...(isSafari && {
+          maxBufferHole: 2,
+          maxSeekHole: 2,
+        }),
+      })
+      hls.loadSource(hlsSrc)
+      hls.attachMedia(audioPlayerRef.current)
+      hlsRef.current = hls
+    } else {
+      // Non-HLS: call load() to prime the new source.
+      // Safari: skip load() when playing — the synchronous play() called in the
+      //   gesture handler would be aborted (AbortError), losing the user activation token.
+      // Chrome/Firefox: always call load(); AudioContext defers play() via pendingPlayRef
+      //   until after this effect, so load() and play() are sequenced with no concurrent abort.
+      if (hasInitializedRef.current && (!isSafari || !isPlayingRef.current)) {
         try {
           audioPlayerRef.current.load()
         } catch (err) {
           console.warn('Failed to reload audio source:', err)
         }
       }
-      hasInitializedRef.current = true
+    }
+
+    hasInitializedRef.current = true
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
     }
   }, [JSON.stringify(audioSrc)])
 
@@ -105,18 +163,10 @@ const ReactAudioPlayerInner = (props) => {
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
         >
-          {Array.isArray(audioSrc) ? (
-            audioSrc.map((src, index) => (
-              <source
-                key={index}
-                src={src}
-                type={getTypeFromExtension(src)}
-              />
-            ))
-          ) : audioSrc ? (
-            <source src={audioSrc} type={getTypeFromExtension(audioSrc)} />
-          ) : null}
-          Your browser does not support the audio element.
+          {!isHlsManaged &&
+            (Array.isArray(audioSrc) ? audioSrc : [audioSrc]).map((url, i) => (
+              <source key={i} src={url} type={getTypeFromExtension(url)} />
+            ))}
         </audio>
         <div className='player-layout'>
           {volumeCtrl && (

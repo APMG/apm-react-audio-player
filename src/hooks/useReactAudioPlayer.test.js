@@ -9,7 +9,8 @@ test('stream detection with duration === Infinity', () => {
   }
 
   // The isStream check should return true for Infinity duration
-  const isStream = mockAudioRef.current && mockAudioRef.current.duration === Infinity
+  const isStream =
+    mockAudioRef.current && mockAudioRef.current.duration === Infinity
   expect(isStream).toBe(true)
 })
 
@@ -23,7 +24,8 @@ test('stream detection with finite duration', () => {
   }
 
   // The isStream check should return false for finite duration
-  const isStream = mockAudioRef.current && mockAudioRef.current.duration === Infinity
+  const isStream =
+    mockAudioRef.current && mockAudioRef.current.duration === Infinity
   expect(isStream).toBe(false)
 })
 
@@ -166,7 +168,9 @@ test('whilePlaying null ref guards - null progressBarRef', () => {
 
 test('whilePlaying null ref guards - null audioRef', () => {
   const audioRef = { current: null }
-  const progressBarRef = { current: { value: 0, style: { setProperty: jest.fn() } } }
+  const progressBarRef = {
+    current: { value: 0, style: { setProperty: jest.fn() } }
+  }
 
   // Simulate the null check in whilePlaying
   const shouldContinue = !!(progressBarRef.current && audioRef.current)
