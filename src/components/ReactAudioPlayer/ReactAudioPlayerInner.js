@@ -100,6 +100,7 @@ const ReactAudioPlayerInner = (props) => {
 
     if (hlsSrc && Hls.isSupported()) {
       const hls = new Hls({
+        autoStartLoad: false,
         liveSyncDurationCount: 3,
         liveMaxLatencyDurationCount: 5,
         enableWorker: !isSafari,
