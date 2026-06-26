@@ -281,7 +281,7 @@ const ReactAudioPlayerInner = (props) => {
               ) : (
                 <div className='player-label'>
                   listen
-                  <div className='player-label-duration'>{`[${formatDuration}]`}</div>
+                  <div className='player-label-duration'>{`[${formatDuration ?? '-- : --'}]`}</div>
                 </div>
               )}
               <div className='player-title'>
