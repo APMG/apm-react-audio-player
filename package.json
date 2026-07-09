@@ -1,7 +1,7 @@
 {
   "name": "apm-react-audio-player",
-  "version": "2.0.2",
-  "author": "Jason Phan <jphan@mpr.org>",
+  "version": "2.1.0",
+  "author": "Benjamin Pedrick <bpedrick@mpr.org>",
   "license": "MIT",
   "private": false,
   "repository": {

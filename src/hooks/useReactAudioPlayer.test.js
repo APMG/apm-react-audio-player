@@ -1,3 +1,55 @@
+import { renderHook, act } from '@testing-library/react'
+import { useAudioPlayer } from './useReactAudioPlayer'
+
+// ============ELEMENT EVENT STATE SYNC================
+// iOS pauses playback outside the app's control (calls, Siri, lock screen,
+// another app taking the audio session). isPlaying must track the element's
+// real state or the UI shows a Pause button over silence.
+describe('isPlaying syncs with audio element events', () => {
+  const setup = () => {
+    const audio = document.createElement('audio')
+    const audioRef = { current: audio }
+    const progressBarRef = { current: null }
+    const view = renderHook(() => useAudioPlayer(audioRef, progressBarRef))
+    return { audio, view }
+  }
+
+  test('external pause (e.g. OS interruption) sets isPlaying false', () => {
+    const { audio, view } = setup()
+
+    act(() => { audio.dispatchEvent(new Event('playing')) })
+    expect(view.result.current.isPlaying).toBe(true)
+
+    // Simulates iOS pausing the element directly — no app code involved
+    act(() => { audio.dispatchEvent(new Event('pause')) })
+    expect(view.result.current.isPlaying).toBe(false)
+  })
+
+  test('playing event sets isPlaying true', () => {
+    const { audio, view } = setup()
+
+    expect(view.result.current.isPlaying).toBe(false)
+    act(() => { audio.dispatchEvent(new Event('playing')) })
+    expect(view.result.current.isPlaying).toBe(true)
+  })
+
+  test('ended event sets isPlaying false', () => {
+    const { audio, view } = setup()
+
+    act(() => { audio.dispatchEvent(new Event('playing')) })
+    act(() => { audio.dispatchEvent(new Event('ended')) })
+    expect(view.result.current.isPlaying).toBe(false)
+  })
+
+  test('listeners are removed on unmount', () => {
+    const { audio, view } = setup()
+
+    view.unmount()
+    // Dispatch after unmount — must not throw (setState on unmounted hook)
+    act(() => { audio.dispatchEvent(new Event('playing')) })
+  })
+})
+
 // ============UNIT TESTS================
 test('stream detection with duration === Infinity', () => {
   // Mock audio element with infinite duration (live stream)
