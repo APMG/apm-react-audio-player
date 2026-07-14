@@ -8,7 +8,6 @@ const getHlsSrc = (audioSrc) => {
   return urls.find((url) => url && url.split('?')[0].endsWith('.m3u8')) ?? null
 }
 
-
 const getTypeFromExtension = (url) => {
   const extension = url.split('.').pop().split('?')[0]
   switch (extension) {
@@ -61,7 +60,8 @@ const ReactAudioPlayerInner = (props) => {
     forwardControl,
     subtitle,
     prefix,
-    intendedPlayingRef
+    intendedPlayingRef,
+    safePlay
   } = props
 
   const audioPlayerRef = props.audioPlayerRef ?? internalAudioRef
@@ -113,6 +113,7 @@ const ReactAudioPlayerInner = (props) => {
       // hls.js can stop emitting errors entirely, so recovery must be driven
       // by our own timers until fragments actually buffer again.
       let recoveryAttempts = 0
+      let mediaRecoveryAttempts = 0
       let inRecoveryEpisode = false
 
       const clearRecoveryTimer = () => {
@@ -137,8 +138,8 @@ const ReactAudioPlayerInner = (props) => {
           // Safari's MSE stalls at EXT-X-DISCONTINUITY boundaries without extra buffer tolerance.
           ...(isSafari && {
             maxBufferHole: 2,
-            maxSeekHole: 2,
-          }),
+            maxSeekHole: 2
+          })
         })
         // Healthy again: fragments are flowing, stand down. If the recovery
         // process left the element paused (rebuilds run the media load
@@ -146,14 +147,21 @@ const ReactAudioPlayerInner = (props) => {
         // playback, restart audio — the element was unlocked by the user's
         // original gesture, so this play() is permitted.
         hls.on(Hls.Events.FRAG_BUFFERED, () => {
-          recoveryAttempts = 0
-          clearRecoveryTimer()
           if (!inRecoveryEpisode) return
           inRecoveryEpisode = false
+          recoveryAttempts = 0
+          mediaRecoveryAttempts = 0
+          clearRecoveryTimer()
           const audio = audioPlayerRef.current
           if (audio && audio.paused && userWantsPlayback()) {
-            const promise = audio.play()
-            if (promise !== undefined) promise.catch(() => {})
+            if (safePlay) {
+              // safePlay handles a rejected play(): NotAllowedError syncs the
+              // UI back to paused, AbortError retries once the element can play.
+              safePlay(audio)
+            } else {
+              const promise = audio.play()
+              if (promise !== undefined) promise.catch(() => {})
+            }
           }
         })
         hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -162,7 +170,21 @@ const ReactAudioPlayerInner = (props) => {
             inRecoveryEpisode = true
             scheduleRecovery(hls)
           } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            hls.recoverMediaError()
+            // Escalate like the network path so repeated media errors can't
+            // spin forever: recoverMediaError() first, then hls.js's
+            // documented next step (audio codec swap + recover), then hand
+            // off to the timer-driven loop, whose rebuild path replaces the
+            // MediaSource entirely. FRAG_BUFFERED resets the counter.
+            inRecoveryEpisode = true
+            mediaRecoveryAttempts++
+            if (mediaRecoveryAttempts === 1) {
+              hls.recoverMediaError()
+            } else if (mediaRecoveryAttempts === 2) {
+              hls.swapAudioCodec()
+              hls.recoverMediaError()
+            } else {
+              scheduleRecovery(hls)
+            }
           } else {
             hls.destroy()
             if (hlsRef.current === hls) hlsRef.current = null
@@ -183,6 +205,9 @@ const ReactAudioPlayerInner = (props) => {
         if (recoveryTimerRef.current) return // retry already pending
         const delay = recoveryAttempts === 0 ? 1000 : 10000
         recoveryTimerRef.current = setTimeout(() => {
+          // Clear the ref before the staleness guard below: this timer has
+          // fired, and returning with its dead id still stored would make the
+          // "retry already pending" check above block every future recovery.
           recoveryTimerRef.current = null
           if (hlsRef.current !== hls || !audioPlayerRef.current) return
           recoveryAttempts++
@@ -373,7 +398,9 @@ const ReactAudioPlayerInner = (props) => {
               ) : (
                 <div className='player-label'>
                   listen
-                  <div className='player-label-duration'>{`[${formatDuration ?? '-- : --'}]`}</div>
+                  <div className='player-label-duration'>{`[${
+                    formatDuration ?? '-- : --'
+                  }]`}</div>
                 </div>
               )}
               <div className='player-title'>

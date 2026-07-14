@@ -11,7 +11,8 @@ jest.mock('hls.js', () => {
     off: jest.fn(),
     startLoad: jest.fn(),
     stopLoad: jest.fn(),
-    recoverMediaError: jest.fn()
+    recoverMediaError: jest.fn(),
+    swapAudioCodec: jest.fn()
   }
   const MockHls = jest.fn(() => mockHlsInstance)
   MockHls.isSupported = jest.fn(() => false)
@@ -510,6 +511,7 @@ describe('hls.js integration', () => {
     Hls._mockInstance.startLoad.mockClear()
     Hls._mockInstance.stopLoad.mockClear()
     Hls._mockInstance.recoverMediaError.mockClear()
+    Hls._mockInstance.swapAudioCodec.mockClear()
     Hls.mockClear()
   })
 
@@ -538,7 +540,9 @@ describe('hls.js integration', () => {
 
   test('initializes hls.js and loads source for .m3u8 string src', () => {
     const props = makeProps('https://example.com/stream.m3u8')
-    act(() => { render(<ReactAudioPlayerInner {...props} />) })
+    act(() => {
+      render(<ReactAudioPlayerInner {...props} />)
+    })
 
     expect(Hls).toHaveBeenCalledTimes(1)
     expect(Hls._mockInstance.loadSource).toHaveBeenCalledWith(
@@ -554,7 +558,9 @@ describe('hls.js integration', () => {
       'https://example.com/stream.m3u8',
       'https://example.com/fallback.aac'
     ])
-    act(() => { render(<ReactAudioPlayerInner {...props} />) })
+    act(() => {
+      render(<ReactAudioPlayerInner {...props} />)
+    })
 
     expect(Hls._mockInstance.loadSource).toHaveBeenCalledWith(
       'https://example.com/stream.m3u8'
@@ -574,8 +580,12 @@ describe('hls.js integration', () => {
   test('destroys hls.js instance when component unmounts', () => {
     const props = makeProps('https://example.com/stream.m3u8')
     let unmount
-    act(() => { ;({ unmount } = render(<ReactAudioPlayerInner {...props} />)) })
-    act(() => { unmount() })
+    act(() => {
+      ;({ unmount } = render(<ReactAudioPlayerInner {...props} />))
+    })
+    act(() => {
+      unmount()
+    })
 
     expect(Hls._mockInstance.destroy).toHaveBeenCalled()
   })
@@ -583,7 +593,9 @@ describe('hls.js integration', () => {
   test('destroys and recreates hls.js instance when audioSrc changes', () => {
     const props = makeProps('https://example.com/stream.m3u8')
     let rerender
-    act(() => { ;({ rerender } = render(<ReactAudioPlayerInner {...props} />)) })
+    act(() => {
+      ;({ rerender } = render(<ReactAudioPlayerInner {...props} />))
+    })
 
     act(() => {
       rerender(
@@ -602,7 +614,9 @@ describe('hls.js integration', () => {
 
   test('does not use hls.js for non-HLS sources', () => {
     const props = makeProps('https://example.com/audio.mp3')
-    act(() => { render(<ReactAudioPlayerInner {...props} />) })
+    act(() => {
+      render(<ReactAudioPlayerInner {...props} />)
+    })
 
     expect(Hls).not.toHaveBeenCalled()
   })
@@ -618,7 +632,9 @@ describe('hls.js integration', () => {
 
     test('registers an ERROR handler on the hls instance', () => {
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
 
       getErrorHandler()
     })
@@ -626,7 +642,9 @@ describe('hls.js integration', () => {
     test('fatal network error restarts loading at the live edge after backoff', () => {
       jest.useFakeTimers()
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
 
       const onError = getErrorHandler()
       act(() => {
@@ -637,14 +655,18 @@ describe('hls.js integration', () => {
       })
 
       expect(Hls._mockInstance.startLoad).not.toHaveBeenCalled()
-      act(() => { jest.advanceTimersByTime(1000) })
+      act(() => {
+        jest.advanceTimersByTime(1000)
+      })
       expect(Hls._mockInstance.startLoad).toHaveBeenCalledWith(-1)
       jest.useRealTimers()
     })
 
     test('fatal media error calls recoverMediaError', () => {
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
 
       const onError = getErrorHandler()
       act(() => {
@@ -658,9 +680,82 @@ describe('hls.js integration', () => {
       expect(Hls._mockInstance.destroy).not.toHaveBeenCalled()
     })
 
+    test('repeated fatal media errors escalate: codec swap, then timer-driven recovery', () => {
+      jest.useFakeTimers()
+      const props = makeProps('https://example.com/stream.m3u8')
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
+
+      const onError = getErrorHandler()
+      const mediaError = {
+        fatal: true,
+        type: Hls.ErrorTypes.MEDIA_ERROR
+      }
+
+      // 1st error: plain recoverMediaError, no codec swap
+      act(() => {
+        onError(Hls.Events.ERROR, mediaError)
+      })
+      expect(Hls._mockInstance.recoverMediaError).toHaveBeenCalledTimes(1)
+      expect(Hls._mockInstance.swapAudioCodec).not.toHaveBeenCalled()
+
+      // 2nd error: swap the audio codec before recovering again
+      act(() => {
+        onError(Hls.Events.ERROR, mediaError)
+      })
+      expect(Hls._mockInstance.swapAudioCodec).toHaveBeenCalledTimes(1)
+      expect(Hls._mockInstance.recoverMediaError).toHaveBeenCalledTimes(2)
+
+      // 3rd error: stop calling recoverMediaError, defer to the retry timer
+      act(() => {
+        onError(Hls.Events.ERROR, mediaError)
+      })
+      expect(Hls._mockInstance.recoverMediaError).toHaveBeenCalledTimes(2)
+      expect(Hls._mockInstance.startLoad).not.toHaveBeenCalled()
+      act(() => {
+        jest.advanceTimersByTime(1000)
+      })
+      expect(Hls._mockInstance.startLoad).toHaveBeenCalledWith(-1)
+      jest.useRealTimers()
+    })
+
+    test('FRAG_BUFFERED resets the media-error escalation counter', () => {
+      const props = makeProps('https://example.com/stream.m3u8')
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
+
+      const onError = getErrorHandler()
+      const onFragBuffered = Hls._mockInstance.on.mock.calls.find(
+        ([event]) => event === Hls.Events.FRAG_BUFFERED
+      )[1]
+      const mediaError = {
+        fatal: true,
+        type: Hls.ErrorTypes.MEDIA_ERROR
+      }
+
+      act(() => {
+        onError(Hls.Events.ERROR, mediaError)
+      })
+      // Healthy fragments arrive: the episode ends and the counter resets
+      act(() => {
+        onFragBuffered()
+      })
+      act(() => {
+        onError(Hls.Events.ERROR, mediaError)
+      })
+
+      // Second error after recovery is treated as a fresh 1st attempt
+      expect(Hls._mockInstance.swapAudioCodec).not.toHaveBeenCalled()
+      expect(Hls._mockInstance.recoverMediaError).toHaveBeenCalledTimes(2)
+    })
+
     test('unrecoverable fatal error destroys the instance', () => {
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
 
       const onError = getErrorHandler()
       act(() => {
@@ -675,7 +770,9 @@ describe('hls.js integration', () => {
 
     test('non-fatal errors are ignored', () => {
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
 
       const onError = getErrorHandler()
       act(() => {
@@ -693,7 +790,9 @@ describe('hls.js integration', () => {
     test('persistent retry escalates to a full rebuild on the 3rd attempt', () => {
       jest.useFakeTimers()
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
       expect(Hls).toHaveBeenCalledTimes(1)
 
       const onError = getErrorHandler()
@@ -705,14 +804,20 @@ describe('hls.js integration', () => {
       })
 
       // Attempt 1 after 1s, attempt 2 after 10s more: startLoad in place
-      act(() => { jest.advanceTimersByTime(1000) })
+      act(() => {
+        jest.advanceTimersByTime(1000)
+      })
       expect(Hls._mockInstance.startLoad).toHaveBeenCalledTimes(1)
-      act(() => { jest.advanceTimersByTime(10000) })
+      act(() => {
+        jest.advanceTimersByTime(10000)
+      })
       expect(Hls._mockInstance.startLoad).toHaveBeenCalledTimes(2)
       expect(Hls._mockInstance.destroy).not.toHaveBeenCalled()
 
       // Attempt 3: destroy and rebuild the instance, then startLoad on it
-      act(() => { jest.advanceTimersByTime(10000) })
+      act(() => {
+        jest.advanceTimersByTime(10000)
+      })
       expect(Hls._mockInstance.destroy).toHaveBeenCalledTimes(1)
       expect(Hls).toHaveBeenCalledTimes(2)
       expect(Hls._mockInstance.startLoad).toHaveBeenCalledTimes(3)
@@ -722,7 +827,9 @@ describe('hls.js integration', () => {
     test('FRAG_BUFFERED cancels a pending recovery retry', () => {
       jest.useFakeTimers()
       const props = makeProps('https://example.com/stream.m3u8')
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
 
       const onError = getErrorHandler()
       const onFragBuffered = Hls._mockInstance.on.mock.calls.find(
@@ -736,8 +843,12 @@ describe('hls.js integration', () => {
         })
       })
       // Fragments start flowing before the retry fires — retry must be cancelled
-      act(() => { onFragBuffered() })
-      act(() => { jest.advanceTimersByTime(20000) })
+      act(() => {
+        onFragBuffered()
+      })
+      act(() => {
+        jest.advanceTimersByTime(20000)
+      })
 
       expect(Hls._mockInstance.startLoad).not.toHaveBeenCalled()
       jest.useRealTimers()
@@ -746,7 +857,9 @@ describe('hls.js integration', () => {
     test('recovery resumes playback when the user intended to play', () => {
       const props = makeProps('https://example.com/stream.m3u8')
       props.intendedPlayingRef = { current: true }
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
       // Rendering re-attaches the ref to the rendered element; mock after
       props.audioPlayerRef.current.play = jest.fn(() => Promise.resolve())
 
@@ -761,15 +874,49 @@ describe('hls.js integration', () => {
           type: Hls.ErrorTypes.NETWORK_ERROR
         })
       })
-      act(() => { onFragBuffered() })
+      act(() => {
+        onFragBuffered()
+      })
 
       expect(props.audioPlayerRef.current.play).toHaveBeenCalled()
+    })
+
+    test('recovery resume delegates to safePlay when provided', () => {
+      const props = makeProps('https://example.com/stream.m3u8')
+      props.intendedPlayingRef = { current: true }
+      props.safePlay = jest.fn()
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
+      props.audioPlayerRef.current.play = jest.fn(() => Promise.resolve())
+
+      const onError = getErrorHandler()
+      const onFragBuffered = Hls._mockInstance.on.mock.calls.find(
+        ([event]) => event === Hls.Events.FRAG_BUFFERED
+      )[1]
+
+      act(() => {
+        onError(Hls.Events.ERROR, {
+          fatal: true,
+          type: Hls.ErrorTypes.NETWORK_ERROR
+        })
+      })
+      act(() => {
+        onFragBuffered()
+      })
+
+      // safePlay owns the play() call so its rejection handling
+      // (NotAllowedError → setIsPlaying(false)) stays in effect
+      expect(props.safePlay).toHaveBeenCalledWith(props.audioPlayerRef.current)
+      expect(props.audioPlayerRef.current.play).not.toHaveBeenCalled()
     })
 
     test('recovery does not resume when the user paused deliberately', () => {
       const props = makeProps('https://example.com/stream.m3u8')
       props.intendedPlayingRef = { current: false }
-      act(() => { render(<ReactAudioPlayerInner {...props} />) })
+      act(() => {
+        render(<ReactAudioPlayerInner {...props} />)
+      })
       // Rendering re-attaches the ref to the rendered element; mock after
       props.audioPlayerRef.current.play = jest.fn(() => Promise.resolve())
 
@@ -784,7 +931,9 @@ describe('hls.js integration', () => {
           type: Hls.ErrorTypes.NETWORK_ERROR
         })
       })
-      act(() => { onFragBuffered() })
+      act(() => {
+        onFragBuffered()
+      })
 
       expect(props.audioPlayerRef.current.play).not.toHaveBeenCalled()
     })
@@ -793,7 +942,9 @@ describe('hls.js integration', () => {
       jest.useFakeTimers()
       const props = makeProps('https://example.com/stream.m3u8')
       let unmount
-      act(() => { ;({ unmount } = render(<ReactAudioPlayerInner {...props} />)) })
+      act(() => {
+        ;({ unmount } = render(<ReactAudioPlayerInner {...props} />))
+      })
 
       const onError = getErrorHandler()
       act(() => {
@@ -802,8 +953,12 @@ describe('hls.js integration', () => {
           type: Hls.ErrorTypes.NETWORK_ERROR
         })
       })
-      act(() => { unmount() })
-      act(() => { jest.advanceTimersByTime(2000) })
+      act(() => {
+        unmount()
+      })
+      act(() => {
+        jest.advanceTimersByTime(2000)
+      })
 
       expect(Hls._mockInstance.startLoad).not.toHaveBeenCalled()
       jest.useRealTimers()

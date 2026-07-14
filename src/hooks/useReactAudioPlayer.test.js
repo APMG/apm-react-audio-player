@@ -17,11 +17,15 @@ describe('isPlaying syncs with audio element events', () => {
   test('external pause (e.g. OS interruption) sets isPlaying false', () => {
     const { audio, view } = setup()
 
-    act(() => { audio.dispatchEvent(new Event('playing')) })
+    act(() => {
+      audio.dispatchEvent(new Event('playing'))
+    })
     expect(view.result.current.isPlaying).toBe(true)
 
     // Simulates iOS pausing the element directly — no app code involved
-    act(() => { audio.dispatchEvent(new Event('pause')) })
+    act(() => {
+      audio.dispatchEvent(new Event('pause'))
+    })
     expect(view.result.current.isPlaying).toBe(false)
   })
 
@@ -29,15 +33,21 @@ describe('isPlaying syncs with audio element events', () => {
     const { audio, view } = setup()
 
     expect(view.result.current.isPlaying).toBe(false)
-    act(() => { audio.dispatchEvent(new Event('playing')) })
+    act(() => {
+      audio.dispatchEvent(new Event('playing'))
+    })
     expect(view.result.current.isPlaying).toBe(true)
   })
 
   test('ended event sets isPlaying false', () => {
     const { audio, view } = setup()
 
-    act(() => { audio.dispatchEvent(new Event('playing')) })
-    act(() => { audio.dispatchEvent(new Event('ended')) })
+    act(() => {
+      audio.dispatchEvent(new Event('playing'))
+    })
+    act(() => {
+      audio.dispatchEvent(new Event('ended'))
+    })
     expect(view.result.current.isPlaying).toBe(false)
   })
 
@@ -46,7 +56,9 @@ describe('isPlaying syncs with audio element events', () => {
 
     view.unmount()
     // Dispatch after unmount — must not throw (setState on unmounted hook)
-    act(() => { audio.dispatchEvent(new Event('playing')) })
+    act(() => {
+      audio.dispatchEvent(new Event('playing'))
+    })
   })
 })
 

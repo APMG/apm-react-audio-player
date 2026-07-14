@@ -148,7 +148,9 @@ export const useAudioPlayer = (
           // calling load() after a source change) — retry once canplay fires.
           // If the audio element was already unlocked by a prior play() call within
           // a user gesture (e.g. the Safari fix in AudioContext), this retry succeeds.
-          audio.addEventListener('canplay', () => safePlay(audio), { once: true })
+          audio.addEventListener('canplay', () => safePlay(audio), {
+            once: true
+          })
         }
       })
     }
@@ -177,7 +179,8 @@ export const useAudioPlayer = (
             hls.off('hlsFragBuffered', onFragBuffered)
             safePlay(audio)
           }
-          pendingPlayAbortRef.current = () => hls.off('hlsFragBuffered', onFragBuffered)
+          pendingPlayAbortRef.current = () =>
+            hls.off('hlsFragBuffered', onFragBuffered)
           hls.on('hlsFragBuffered', onFragBuffered)
         }
       } else if (
@@ -298,6 +301,7 @@ export const useAudioPlayer = (
     forwardControl,
     play,
     pause,
+    safePlay,
     isPlaying,
     intendedPlayingRef,
     isFinishedPlaying,
