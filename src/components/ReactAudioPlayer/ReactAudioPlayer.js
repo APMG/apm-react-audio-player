@@ -24,7 +24,9 @@ const ReactAudioPlayer = (props) => {
     toggleMute,
     formatCalculateTime,
     rewindControl,
-    forwardControl
+    forwardControl,
+    intendedPlayingRef,
+    safePlay
   } = useAudioPlayer(audioPlayerRef, progressBarRef, { hlsRef })
 
   return (
@@ -47,6 +49,8 @@ const ReactAudioPlayer = (props) => {
       formatCalculateTime={formatCalculateTime}
       rewindControl={rewindControl}
       forwardControl={forwardControl}
+      intendedPlayingRef={intendedPlayingRef}
+      safePlay={safePlay}
     />
   )
 }

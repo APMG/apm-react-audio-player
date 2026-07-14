@@ -11,8 +11,36 @@ export const useAudioPlayer = (
   const [isFinishedPlaying, setIsFinishedPlaying] = useState(false)
   const animationRef = useRef()
   const pendingPlayAbortRef = useRef(null)
+  // The user's last deliberate action (play vs pause). Unlike isPlaying —
+  // which mirrors the element and goes false on OS interruptions, stalls, and
+  // hls.js rebuilds — this only changes when play()/pause() are called, so
+  // error recovery can know whether to resume audio once data is back.
+  const intendedPlayingRef = useRef(false)
   const [isMuted, setIsMuted] = useState(false)
   const isStream = audioRef.current && audioRef.current.duration === Infinity
+
+  // Keep isPlaying in sync with the element's real state. iOS/Safari pause
+  // playback outside the app's control (phone calls, Siri, another app taking
+  // the audio session, lock-screen controls, Bluetooth route changes); without
+  // these listeners the UI keeps showing a Pause button over silence.
+  // No dependency array: audioRef.current is null on early renders (the
+  // element mounts later), so re-attach each render and clean up in between.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return undefined
+
+    const onPlaying = () => setIsPlaying(true)
+    const onPause = () => setIsPlaying(false)
+
+    audio.addEventListener('playing', onPlaying)
+    audio.addEventListener('pause', onPause)
+    audio.addEventListener('ended', onPause)
+    return () => {
+      audio.removeEventListener('playing', onPlaying)
+      audio.removeEventListener('pause', onPause)
+      audio.removeEventListener('ended', onPause)
+    }
+  })
 
   useEffect(() => {
     if (currentTime === Number(duration)) {
@@ -93,6 +121,7 @@ export const useAudioPlayer = (
   }
 
   const pause = () => {
+    intendedPlayingRef.current = false
     if (pendingPlayAbortRef.current) {
       pendingPlayAbortRef.current()
       pendingPlayAbortRef.current = null
@@ -119,13 +148,16 @@ export const useAudioPlayer = (
           // calling load() after a source change) — retry once canplay fires.
           // If the audio element was already unlocked by a prior play() call within
           // a user gesture (e.g. the Safari fix in AudioContext), this retry succeeds.
-          audio.addEventListener('canplay', () => safePlay(audio), { once: true })
+          audio.addEventListener('canplay', () => safePlay(audio), {
+            once: true
+          })
         }
       })
     }
   }
 
   const play = () => {
+    intendedPlayingRef.current = true
     setIsPlaying(true)
     setIsFinishedPlaying(false)
 
@@ -147,7 +179,8 @@ export const useAudioPlayer = (
             hls.off('hlsFragBuffered', onFragBuffered)
             safePlay(audio)
           }
-          pendingPlayAbortRef.current = () => hls.off('hlsFragBuffered', onFragBuffered)
+          pendingPlayAbortRef.current = () =>
+            hls.off('hlsFragBuffered', onFragBuffered)
           hls.on('hlsFragBuffered', onFragBuffered)
         }
       } else if (
@@ -268,7 +301,9 @@ export const useAudioPlayer = (
     forwardControl,
     play,
     pause,
+    safePlay,
     isPlaying,
+    intendedPlayingRef,
     isFinishedPlaying,
     currentTime,
     duration,
