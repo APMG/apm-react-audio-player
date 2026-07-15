@@ -43,7 +43,7 @@ export const useAudioPlayer = (
   })
 
   useEffect(() => {
-    if (currentTime === Number(duration)) {
+    if (Number(currentTime) === Number(duration)) {
       // restart()
       setIsFinishedPlaying(true)
     }
@@ -112,7 +112,7 @@ export const useAudioPlayer = (
     updateCurrentTime()
 
     // when you reach the end of the song
-    if (!isStream && progressBarRef.current.value === duration) {
+    if (!isStream && Number(progressBarRef.current.value) === duration) {
       // restart()
       setIsFinishedPlaying(true)
       return
