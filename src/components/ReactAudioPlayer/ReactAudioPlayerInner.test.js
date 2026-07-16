@@ -456,6 +456,61 @@ describe('ReactAudioPlayerInner rendering', () => {
     expect(source.getAttribute('type')).toBe('application/x-mpegURL')
   })
 
+  test('sets data-src to the source URL for non-HLS audio', () => {
+    const props = {
+      audioSrc: 'https://example.com/audio.mp3',
+      audioPlayerRef: { current: null },
+      progressBarRef: { current: null },
+      isPlaying: false,
+      isMuted: false,
+      currentTime: 0,
+      duration: 100,
+      onLoadedMetadata: jest.fn(),
+      calculateTime: jest.fn(() => '00:00'),
+      togglePlaying: jest.fn(),
+      changePlayerCurrentTime: jest.fn(),
+      volumeControl: jest.fn(),
+      toggleMute: jest.fn(),
+      formatCalculateTime: jest.fn(),
+      rewindControl: jest.fn(),
+      forwardControl: jest.fn()
+    }
+
+    const { container } = render(<ReactAudioPlayerInner {...props} />)
+    const audio = container.querySelector('audio')
+    expect(audio.getAttribute('data-src')).toBe('https://example.com/audio.mp3')
+  })
+
+  test('sets data-src to the .m3u8 URL when audioSrc is an array (native HLS path)', () => {
+    const props = {
+      audioSrc: [
+        'https://example.com/stream.m3u8',
+        'https://example.com/fallback.aac'
+      ],
+      audioPlayerRef: { current: null },
+      progressBarRef: { current: null },
+      isPlaying: false,
+      isMuted: false,
+      currentTime: 0,
+      duration: Infinity,
+      onLoadedMetadata: jest.fn(),
+      calculateTime: jest.fn(() => '00:00'),
+      togglePlaying: jest.fn(),
+      changePlayerCurrentTime: jest.fn(),
+      volumeControl: jest.fn(),
+      toggleMute: jest.fn(),
+      formatCalculateTime: jest.fn(),
+      rewindControl: jest.fn(),
+      forwardControl: jest.fn()
+    }
+
+    const { container } = render(<ReactAudioPlayerInner {...props} />)
+    const audio = container.querySelector('audio')
+    expect(audio.getAttribute('data-src')).toBe(
+      'https://example.com/stream.m3u8'
+    )
+  })
+
   test('audio reload with array audioSrc - same values different reference', () => {
     const mockLoad = jest.fn()
     const audioRef = { current: { load: mockLoad } }
@@ -575,6 +630,76 @@ describe('hls.js integration', () => {
     })
     // hls.js owns the source — no <source> tag should be in the DOM
     expect(container.querySelector('source')).toBeNull()
+  })
+
+  test('sets data-src to the real .m3u8 URL when hls.js is active', async () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    let container
+    await act(async () => {
+      ;({ container } = render(<ReactAudioPlayerInner {...props} />))
+    })
+    // hls.js sets src to a blob: URL — data-src must expose the real one
+    expect(container.querySelector('audio').getAttribute('data-src')).toBe(
+      'https://example.com/stream.m3u8'
+    )
+  })
+
+  test('updates data-src when switching to a different live stream', () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    let container, rerender
+    act(() => {
+      ;({ container, rerender } = render(<ReactAudioPlayerInner {...props} />))
+    })
+
+    act(() => {
+      rerender(
+        <ReactAudioPlayerInner
+          {...props}
+          audioSrc='https://example.com/other-stream.m3u8'
+        />
+      )
+    })
+
+    expect(container.querySelector('audio').getAttribute('data-src')).toBe(
+      'https://example.com/other-stream.m3u8'
+    )
+  })
+
+  test('updates data-src when switching between live stream and on-demand audio', () => {
+    const props = makeProps('https://example.com/stream.m3u8')
+    let container, rerender
+    act(() => {
+      ;({ container, rerender } = render(<ReactAudioPlayerInner {...props} />))
+    })
+    expect(container.querySelector('audio').getAttribute('data-src')).toBe(
+      'https://example.com/stream.m3u8'
+    )
+
+    // Live → on-demand: hls.js is torn down, data-src follows to the mp3
+    act(() => {
+      rerender(
+        <ReactAudioPlayerInner
+          {...props}
+          audioSrc='https://example.com/story-audio.mp3'
+        />
+      )
+    })
+    expect(container.querySelector('audio').getAttribute('data-src')).toBe(
+      'https://example.com/story-audio.mp3'
+    )
+
+    // On-demand → back to live
+    act(() => {
+      rerender(
+        <ReactAudioPlayerInner
+          {...props}
+          audioSrc='https://example.com/stream.m3u8'
+        />
+      )
+    })
+    expect(container.querySelector('audio').getAttribute('data-src')).toBe(
+      'https://example.com/stream.m3u8'
+    )
   })
 
   test('destroys hls.js instance when component unmounts', () => {
