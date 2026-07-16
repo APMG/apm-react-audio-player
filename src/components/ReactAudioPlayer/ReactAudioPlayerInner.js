@@ -280,6 +280,14 @@ const ReactAudioPlayerInner = (props) => {
           preload='none'
           onLoadedMetadata={onLoadedMetadata}
           muted={isMuted}
+          // Analytics (GTM) reads the source URL off the element. When hls.js
+          // manages playback it sets src to an opaque blob: URL, and native
+          // <source> children leave src empty — data-src always carries the
+          // real URL so it can be read regardless of playback mode.
+          data-src={
+            hlsSrcForRender ??
+            (Array.isArray(audioSrc) ? audioSrc[0] : audioSrc)
+          }
         >
           {!isHlsManaged &&
             (Array.isArray(audioSrc) ? audioSrc : [audioSrc]).map((url, i) => (
